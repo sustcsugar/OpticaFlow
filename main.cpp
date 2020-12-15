@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 		int ksize = 1;
 		int scale = 1;
 		int delta = 0;
-		int ddepth = CV_16S;
+		int ddepth = CV_8S;
 
 
 		int frameCount = 0;
@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
 			convertScaleAbs(grad_x, abs_grad_x);
 			convertScaleAbs(grad_y, abs_grad_y);
 			addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel_noised);
+			imshow("sobel_noised",sobel_noised);
 
 			//filtered_dly½øÐÐsobel±ä»»
 			Sobel(filtered_dly, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
