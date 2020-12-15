@@ -104,23 +104,23 @@ int main(int argc, char *argv[])
 			add(gray, noise, noised, noArray(), CV_8U);
 			imshow("Noised", noised);
 
-			//sobel提取两张图象的边缘
-			//noised
-			Sobel(noised, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
-			Sobel(noised, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
-			convertScaleAbs(grad_x, abs_grad_x);
-			convertScaleAbs(grad_y, abs_grad_y);
-			addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel_noised);
-			imshow("sobel_noised",sobel_noised);
+			////sobel提取两张图象的边缘
+			////noised
+			//Sobel(noised, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
+			//Sobel(noised, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
+			//convertScaleAbs(grad_x, abs_grad_x);
+			//convertScaleAbs(grad_y, abs_grad_y);
+			//addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel_noised);
+			//imshow("sobel_noised",sobel_noised);
 
-			//filtered_dly进行sobel变换
-			Sobel(filtered_dly, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
-			Sobel(filtered_dly, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
-			convertScaleAbs(grad_x, abs_grad_x);
-			convertScaleAbs(grad_y, abs_grad_y);
-			addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel_dly);
+			////filtered_dly进行sobel变换
+			//Sobel(filtered_dly, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
+			//Sobel(filtered_dly, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
+			//convertScaleAbs(grad_x, abs_grad_x);
+			//convertScaleAbs(grad_y, abs_grad_y);
+			//addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel_dly);
 
-			Mat show = opticalFlow(sobel_noised, sobel_dly);
+			Mat show = opticalFlow(noised, filtered_dly);
 			//提取速度分量
 			split(show, show_channels);
 			speed_pixel = show_channels[0];
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 			Filtered << filtered;
 			Motion << speed_pixel;
 			Choosing << choose;
-			SobelImage << sobel_noised;
+			//SobelImage << sobel_noised;
 
 			//循环关键，不动
 			waitKey(1);
