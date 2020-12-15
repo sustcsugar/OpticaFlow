@@ -60,11 +60,22 @@ int main(int argc, char *argv[])
 		Mat noised_bf;
 		Mat noised_forin = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 
+		//Sobel参数声明
+		Mat grad_x = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat grad_y = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat abs_grad_x = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat abs_grad_y = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat sobel_noised = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat sobel_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		
+		int ksize = 1;
+		int scale = 1;
+		int delta = 0;
+		int ddepth = CV_16S;
+
+
 		int frameCount = 0;
 		float noiseStd = 10;
-
-		
-
 		
 		//存储视频用
 		int width = frame.cols;
@@ -73,11 +84,12 @@ int main(int argc, char *argv[])
 		char name[] = "Filtered.avi";
 		char name2[] = "Motion.avi";
 		char name3[] = "Choosing.avi";
+		char name4[] = "sobel.avi";
 
 		VideoWriter Filtered(name, -1, fps, Size(width, height));
 		VideoWriter Motion(name2, -1, fps, Size(width, height));
 		VideoWriter Choosing(name3, -1, fps, Size(width, height));
-
+		VideoWriter SobelImage(name4, -1, fps, Size(width, height));
 
 		//初始化
 		cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
@@ -92,6 +104,20 @@ int main(int argc, char *argv[])
 			add(gray, noise, noised, noArray(), CV_8U);
 			imshow("Noised", noised);
 
+			//sobel提取两张图象的边缘
+			//noised
+			Sobel(noised, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
+			Sobel(noised, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
+			convertScaleAbs(grad_x, abs_grad_x);
+			convertScaleAbs(grad_y, abs_grad_y);
+			addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel_noised);
+
+			//filtered_dly进行sobel变换
+			Sobel(filtered_dly, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
+			Sobel(filtered_dly, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
+			convertScaleAbs(grad_x, abs_grad_x);
+			convertScaleAbs(grad_y, abs_grad_y);
+			addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel_dly);
 
 			Mat show = opticalFlow(noised, filtered_dly);
 			//提取速度分量
@@ -99,7 +125,7 @@ int main(int argc, char *argv[])
 			speed_pixel = show_channels[0];
 
 
-			imshow("speed", speed_pixel);
+			imshow("speed(sobel)", speed_pixel);
 			
 
 			int cols = frame.cols;
@@ -141,6 +167,7 @@ int main(int argc, char *argv[])
 			Filtered << filtered;
 			Motion << speed_pixel;
 			Choosing << choose;
+			SobelImage << sobel_noised;
 
 			//循环关键，不动
 			waitKey(1);
