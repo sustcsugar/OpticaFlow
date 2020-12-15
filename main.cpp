@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 			convertScaleAbs(grad_y, abs_grad_y);
 			addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel_dly);
 
-			Mat show = opticalFlow(noised, filtered_dly);
+			Mat show = opticalFlow(sobel_noised, sobel_dly);
 			//提取速度分量
 			split(show, show_channels);
 			speed_pixel = show_channels[0];
