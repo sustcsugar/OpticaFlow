@@ -76,6 +76,7 @@ int main(int argc, char *argv[]) {
 		add(gray, noise,noised,noArray(), CV_8U);
 		imshow("noised", noised);
 		
+		
 		bilateralFilter(noised, noised, d, sigma, sigma);
 
 		//**********************	pyramid motion detection	*******************
