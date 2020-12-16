@@ -47,20 +47,24 @@ int main(int argc, char *argv[]) {
 	float noiseStd = 10;
 
 
-	//write video
-	int width = frame.cols;
-	int height = frame.rows;
-	double fps = 30;
-	char name[] = "show.avi";
+	//**************************		write video
+	//int width = frame.cols;
+	//int height = frame.rows;
+	//double fps = 30;
+	//char name[] = "show.avi";
 	//char name2[] = "Motion.avi";
 	//char name3[] = "Choosing.avi";
 
-	VideoWriter Show(name, -1, fps, Size(640, 480));
+	//VideoWriter Show(name, -1, fps, Size(640, 480));
 
 
-	//init
-	cvtColor(frame, gray, CV_RGB2GRAY);	//covert to GRAY
+	//***************************			initialization
+	cvtColor(frame, gray, CV_RGB2GRAY);	
 	filtered_dly = gray.clone();
+
+	// bilateral parameter
+	int d = 5;
+	double sigma = 10;
 
 	while (1) {
 
@@ -71,59 +75,47 @@ int main(int argc, char *argv[]) {
 		randn(noise, 0, noiseStd);
 		add(gray, noise,noised,noArray(), CV_8U);
 		imshow("noised", noised);
+		
+		bilateralFilter(noised, noised, d, sigma, sigma);
 
 		//**********************	pyramid motion detection	*******************
-		Mat img = filtered_dly;
+		//Mat img = filtered_dly;
 		Mat img1_p0 = filtered_dly;
-		//Mat img2_p0 = noised;
-		Mat img2_p0 = gray;		//use gray to test motion result.
-
-		resize(img, img, Size(640, 480), 0, 0, INTER_AREA);
+		Mat img2_p0 = noised;
+		
+		
+		//resize(img, img, Size(640, 480), 0, 0, INTER_AREA);
 		resize(img1_p0, img1_p0, Size(640, 480), 0, 0, INTER_AREA);
 		resize(img2_p0, img2_p0, Size(640, 480), 0, 0, INTER_AREA);
 
-
 		Mat img1_p1, img1_p2, img2_p1, img2_p2, img2_p3;
 		img1_p1 = img1_p0;
-		//img2_p1 = img1_p0;
-		img2_p1 = img2_p0; // ? 是写错了吧
+		img2_p1 = img2_p0;
 
 		//initial img pyr
 		pyrDown(img1_p0, img1_p1, Size(img1_p0.cols / 2, img1_p0.rows / 2));
 		pyrDown(img1_p1, img1_p2, Size(img1_p1.cols / 2, img1_p1.rows / 2));
 		pyrDown(img2_p0, img2_p1, Size(img2_p0.cols / 2, img2_p0.rows / 2));
 		pyrDown(img2_p1, img2_p2, Size(img2_p1.cols / 2, img2_p1.rows / 2));
-		pyrDown(img2_p2, img2_p3, Size(img2_p2.cols / 2, img2_p2.rows / 2));
 
 		Mat show;
-		Mat vel_up(img2_p3.size(), CV_32FC2, Scalar(0));
+		Mat vel_up(img2_p2.size(), CV_32FC2, Scalar(0));
 		opticalFlow(img1_p2, img2_p2, vel_up, 4);
 		opticalFlow(img1_p1, img2_p1, vel_up, 8);
 		show = opticalFlow(img1_p0, img2_p0, vel_up, 16);
-		//int p1, p2;
-		//for (int i = 16 / 2; i <= 640 - 16 / 2; i += 4)//CSIZE
-		//{
-		//cal Gaussian pry
-		//	for (int j = 16 / 2; j <= 480 - 16 / 2; j += 4)//CSIZE
-		//	{
-		//		if ((vel_up.at<Vec2f>(j, i)[0] > 1)&& vel_up.at<Vec2f>(j, i)[1] > 1) { 
-		//			p1 = vel_up.at<Vec2f>(j, i)[0]*10;
-		//			p2 = vel_up.at<Vec2f>(j, i)[1]*10;
-		//			arrowedLine(img, Point(i, j), Point(i - p1, j - p2), Scalar(0, 255, 0), 2, 8, 0, 0.1);
 
-		//		}
-		//	}
-		//}
 		Mat element = getStructuringElement(MORPH_RECT, Size(10, 10));
 		dilate(show, show, element);
-		//	imshow("1", img);
-		imshow("2_pry_show", show);
+		Mat show_channels[3];
+		Mat speed_pixel;
+		split(show, show_channels);
+		speed_pixel = show_channels[2];
 
-		//************************   write    video   ***************** 
-		Show << show;
+
+		imshow("motion", speed_pixel);
 
 		// 保存上一帧数据
-		filtered_dly = gray;
+		filtered_dly = noised;
 		waitKey(1);
 
 		videoSource >> frame;
