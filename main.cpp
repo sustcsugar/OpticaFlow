@@ -54,27 +54,29 @@ int main(int argc, char *argv[])
 		resize(frame, frame, Size(640, 480), 0, 0, INTER_AREA);
 
 
-		Mat moised_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat gray = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat noised = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered2 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_mb = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf2 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf82 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf73 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf64 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf55 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf46 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf37 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf28 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered2_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat noised_mb = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat noised_dly_mb = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat choose = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat noise = Mat(frame.size(), CV_16S);
+		Mat noised_dly		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat gray			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat noised			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered2		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_mb		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf2	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf82	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf73	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf64	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf55	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf46	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf37	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf28	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_dly	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered2_dly	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+
+		Mat noised_mb		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat noised_dly_mb	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat choose			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+
+		Mat noise			= Mat(frame.size(), CV_16S);
 		Mat show_channels[3];
 		Mat speed_pixel;
 		Mat speed_pixel_b;
@@ -99,6 +101,7 @@ int main(int argc, char *argv[])
 		char name2[] = "Motion.avi";
 		char name3[] = "Choosing.avi";
 
+
 		VideoWriter Filtered(name, -1, fps, Size(width, height));
 		VideoWriter Motion(name2, -1, fps, Size(width, height));
 		VideoWriter Choosing(name3, -1, fps, Size(width, height));
@@ -109,19 +112,14 @@ int main(int argc, char *argv[])
 		ofile.open("C:\\Document\\3D除噪\\Motion_out.txt");
 
 
-
 		//初始化
 		cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
 		filtered_dly = gray.clone();
 		noised_bf_dly = gray.clone();
 
 
-
-
-
-
 		while (1) {
-			///*！————————————加噪声——————————————————————！
+			//！————————————加噪声——————————————————————！
 			imshow("Original", frame);
 			cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
 			imshow("Gray Frame", gray);
@@ -135,27 +133,27 @@ int main(int argc, char *argv[])
 			bilateralFilter(noised, noised_bf, 3, 40, 40);
 
 
-			/*//Sobel求轮廓
-			//求x方向梯度——noised_bf
-			Sobel(noised_bf, grad_x1, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
-			convertScaleAbs(grad_x1, abs_grad_x1);
-			//求y方向梯度
-			Sobel(noised_bf, grad_y1, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
-			convertScaleAbs(grad_y1, abs_grad_y1);
-			//合并梯度
-			addWeighted(abs_grad_x1, 0.5, abs_grad_y1, 0.5, 0, dst1);
-			imshow("Sobel算法轮廓提取效果nosied", dst1);
+			////Sobel求轮廓
+			////求x方向梯度——noised_bf
+			//Sobel(noised_bf, grad_x1, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
+			//convertScaleAbs(grad_x1, abs_grad_x1);
+			////求y方向梯度
+			//Sobel(noised_bf, grad_y1, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
+			//convertScaleAbs(grad_y1, abs_grad_y1);
+			////合并梯度
+			//addWeighted(abs_grad_x1, 0.5, abs_grad_y1, 0.5, 0, dst1);
+			//imshow("Sobel算法轮廓提取效果nosied", dst1);
 
-			//求x方向梯度——filtered_dly
-			Sobel(noised_bf_dly, grad_x2, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
-			convertScaleAbs(grad_x2, abs_grad_x2);
-			//求y方向梯度
-			Sobel(noised_bf_dly, grad_y2, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
-			convertScaleAbs(grad_y2, abs_grad_y2);
-			//合并梯度
-			addWeighted(abs_grad_x2, 0.5, abs_grad_y2, 0.5, 0, dst2);
-			imshow("Sobel算法轮廓提取效果filtered", dst2);
-			*/
+			////求x方向梯度——filtered_dly
+			//Sobel(noised_bf_dly, grad_x2, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
+			//convertScaleAbs(grad_x2, abs_grad_x2);
+			////求y方向梯度
+			//Sobel(noised_bf_dly, grad_y2, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
+			//convertScaleAbs(grad_y2, abs_grad_y2);
+			////合并梯度
+			//addWeighted(abs_grad_x2, 0.5, abs_grad_y2, 0.5, 0, dst2);
+			//imshow("Sobel算法轮廓提取效果filtered", dst2);
+			
 
 
 			//noised_bf_dly = noised_bf.clone();
@@ -174,7 +172,7 @@ int main(int argc, char *argv[])
 			Mat img1_p1, img1_p2, img2_p1, img2_p2, img2_p3;
 			img1_p1 = img1_p0;
 			img2_p1 = img1_p0;
-				//initial img pyr
+			//initial img pyr
 			pyrDown(img1_p0, img1_p1, Size(img1_p0.cols / 2, img1_p0.rows / 2));
 			pyrDown(img1_p1, img1_p2, Size(img1_p1.cols / 2, img1_p1.rows / 2));
 			pyrDown(img2_p0, img2_p1, Size(img2_p0.cols / 2, img2_p0.rows / 2));
@@ -189,9 +187,7 @@ int main(int argc, char *argv[])
 			dilate(show, show, element);
 			imshow("2", show);
 
-
-
-			
+					
 			//提取速度分量
 			split(show, show_channels);
 			speed_pixel = show_channels[0];
@@ -238,7 +234,7 @@ int main(int argc, char *argv[])
 			*/
 
 
-			///*扩展区域的合成
+			//扩展区域的合成
 			filtered_bf82 = filtered_dly * 0.8 + noised_bf * 0.2;
 			filtered_bf73 = filtered_dly * 0.7 + noised_bf * 0.3;
 			//filtered_bf64 = filtered_dly * 0.6 + noised_bf * 0.4;
@@ -254,28 +250,37 @@ int main(int argc, char *argv[])
 			
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel_b.ptr(i, j) >= 80) {
+					if (*speed_pixel_b.ptr(i, j) >= 90) {
 						proportion[i][j] = 3;
-						if (i < 10) {
-							for (int k = 0; k < i + 10; k++) {
-								for (int z =0; z < j + 10; z++) {
+						*choose.ptr(i, j) = 255;
+						if (i < 8) {
+							for (int k = 0; k < i + 8; k++) {
+								for (int z =0; z < j + 8; z++) {
 									proportion[k][z] = 2;
+									if (k <= rows && z <= cols) {
+										*choose.ptr(k, z) = 160;
+									}
 								}
 							}
 						}
-						else if (i >= 10) {
-							for (int k = i - 10; k < i + 10; k++) {
-								for (int z = j - 10; z < j + 10; z++) {
+						else if (i >= 8) {
+							for (int k = i - 8; k < i + 8; k++) {
+								for (int z = j - 8; z < j + 10; z++) {
 									proportion[k][z] = 2;
+									if (k <= rows && z <= cols) {
+										*choose.ptr(k, z) = 160;
+									}
 								}
 							}
 						}					
 					}
 					else if (*speed_pixel_b.ptr(i, j) >= 40) {
 						proportion[i][j] = 1;
+						*choose.ptr(i, j) = 80;
 					}
 					else {
 						proportion[i][j] = 0;
+						*choose.ptr(i, j) = 0;
 					}
 				}
 			}
