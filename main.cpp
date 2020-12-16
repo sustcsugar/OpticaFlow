@@ -207,34 +207,6 @@ int main(int argc, char *argv[])
 			int cols = frame.cols;
 			int rows = frame.rows;
 
-			/*
-			//简单的73和37
-			filtered_bf = filtered_dly * 0.7 + noised_bf * 0.3;
-			filtered_bf2 = filtered_dly * 0.3 + noised_bf * 0.7;
-			imshow("bf", noised_bf);
-			//根据速度函数，合成输出图像
-			for (int i = 0; i < rows; i++) {
-				//ofile << "第" << i << "行 ";
-				for (int j = 0; j < cols; j++) {
-					//判断速度阈值，选择合适的数据源
-					if (*speed_pixel_b.ptr(i, j) <= 40) {
-						//cout << *speed_pixel.ptr(i, j) << endl;
-						*filtered.ptr(i, j) = *filtered_bf.ptr(i, j);
-						*choose.ptr(i, j) = 0;
-					}
-					else {
-						*filtered.ptr(i, j) = *filtered_bf2.ptr(i, j);
-						*choose.ptr(i, j) = 255;
-					}
-					//信息存储
-					ofile << (int)*speed_pixel_b.ptr(i, j) << " ";
-				}
-				ofile << endl;
-			}
-			ofile << endl;
-			*/
-
-
 			//扩展区域的合成
 			filtered_bf82 = filtered_dly * 0.8 + noised_bf * 0.2;
 			filtered_bf73 = filtered_dly * 0.7 + noised_bf * 0.3;
@@ -318,6 +290,7 @@ int main(int argc, char *argv[])
 			Choosing << choose;
 			Pyramid_result << show;
 
+			cout << "当前帧数:" << frameCount << " ;" << endl;
 			//循环关键，不动
 			waitKey(1);
 			videoSource >> frame;
@@ -471,8 +444,7 @@ Mat opticalFlow(Mat img1, Mat img2) {
 */
 
 
-///*1x1代码
-
+//1x1代码
 Mat opticalFlow(Mat img1, Mat img2) {
 	img1.convertTo(img1, CV_32F);
 	img2.convertTo(img2, CV_32F);
@@ -614,7 +586,7 @@ Mat opticalFlow(Mat img1, Mat img2) {
 
 
 //输入img1,img2
-//vel_up表示
+//vel_up表示 ?? 
 Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL) {
 	img1.convertTo(img1, CV_32F);
 	img2.convertTo(img2, CV_32F);
