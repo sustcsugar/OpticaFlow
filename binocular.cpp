@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 	videoSource.set(CV_CAP_PROP_CONVERT_RGB, 0);
 	videoSource >> frame;
 
-	//declare Mat 
+	//declare Mat variables
 	Mat gray = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 	Mat noise = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 	Mat noised = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
@@ -52,17 +52,19 @@ int main(int argc, char *argv[]) {
 	int height = frame.rows;
 	double fps = 30;
 	char name[] = "show.avi";
-	char name2[] = "Motion.avi";
-	char name3[] = "Choosing.avi";
+	//char name2[] = "Motion.avi";
+	//char name3[] = "Choosing.avi";
 
 	VideoWriter Show(name, -1, fps, Size(640, 480));
 
 
-	//初始化
-	cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
+	//init
+	cvtColor(frame, gray, CV_RGB2GRAY);	//covert to GRAY
 	filtered_dly = gray.clone();
 
 	while (1) {
+
+		//***********************	add noise	*****************
 		imshow("Original", frame);
 		cvtColor(frame, gray, CV_RGB2GRAY);
 		imshow("gray frame", gray);
@@ -70,10 +72,12 @@ int main(int argc, char *argv[]) {
 		add(gray, noise,noised,noArray(), CV_8U);
 		imshow("noised", noised);
 
-
+		//**********************	pyramid motion detection	*******************
 		Mat img = filtered_dly;
 		Mat img1_p0 = filtered_dly;
-		Mat img2_p0 = noised;
+		//Mat img2_p0 = noised;
+		Mat img2_p0 = gray;		//use gray to test motion result.
+
 		resize(img, img, Size(640, 480), 0, 0, INTER_AREA);
 		resize(img1_p0, img1_p0, Size(640, 480), 0, 0, INTER_AREA);
 		resize(img2_p0, img2_p0, Size(640, 480), 0, 0, INTER_AREA);
@@ -96,7 +100,7 @@ int main(int argc, char *argv[]) {
 		opticalFlow(img1_p2, img2_p2, vel_up, 4);
 		opticalFlow(img1_p1, img2_p1, vel_up, 8);
 		show = opticalFlow(img1_p0, img2_p0, vel_up, 16);
-		int p1, p2;
+		//int p1, p2;
 		//for (int i = 16 / 2; i <= 640 - 16 / 2; i += 4)//CSIZE
 		//{
 		//cal Gaussian pry
@@ -119,17 +123,16 @@ int main(int argc, char *argv[]) {
 		Show << show;
 
 		// 保存上一帧数据
-		filtered_dly = noised;
-
+		filtered_dly = gray;
 		waitKey(1);
 
 		videoSource >> frame;
 		frameCount++;
+
 		if (frame.empty()) {
 			cout << endl << "Video ended!" << endl;
 			break;
 		}
-
 	}
 	return 0;
 }
