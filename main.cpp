@@ -22,7 +22,9 @@ using namespace std;
 //video:720*480
 #define CSIZE 4
 #define XSIZE 720//180		
-#define YSIZE 480//120		
+#define YSIZE 480//120	
+
+
 Mat opticalFlow(Mat img1, Mat img2);
 Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL);
 
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
 		videoSource >> frame;
 		resize(frame, frame, Size(640, 480), 0, 0, INTER_AREA);
 
-
+		//图像矩阵声明
 		Mat noised_dly		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 		Mat gray			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 		Mat noised			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
@@ -76,6 +78,7 @@ int main(int argc, char *argv[])
 		Mat noised_dly_mb	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 		Mat choose			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 
+
 		Mat noise			= Mat(frame.size(), CV_16S);
 		Mat show_channels[3];
 		Mat speed_pixel;
@@ -84,14 +87,16 @@ int main(int argc, char *argv[])
 		Mat noised_bf_dly;
 		Mat noised_forin = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 
-		Mat grad_x1, grad_y1;
-		Mat grad_x2, grad_y2;
-		Mat abs_grad_x1, abs_grad_y1, dst1;
-		Mat abs_grad_x2, abs_grad_y2, dst2;
+
+		////sobel变量声明
+		//Mat grad_x1, grad_y1;
+		//Mat grad_x2, grad_y2;
+		//Mat abs_grad_x1, abs_grad_y1, dst1;
+		//Mat abs_grad_x2, abs_grad_y2, dst2;
 
 
 		int frameCount = 0;
-		float noiseStd = 10;
+		float noiseStd = 10;	//生成noise的参数
 		
 		//存储视频用
 		int width = frame.cols;
@@ -100,17 +105,18 @@ int main(int argc, char *argv[])
 		char name[] = "Filtered.avi";
 		char name2[] = "Motion.avi";
 		char name3[] = "Choosing.avi";
+		char name4[] = "Pyramid.avi";
 
 
 		VideoWriter Filtered(name, -1, fps, Size(width, height));
 		VideoWriter Motion(name2, -1, fps, Size(width, height));
 		VideoWriter Choosing(name3, -1, fps, Size(width, height));
+		VideoWriter Pyramid_result(name4, -1, fps, Size(width, height));
 
 		
 		//存储文件用
 		ofstream ofile;
-		ofile.open("C:\\Document\\3D除噪\\Motion_out.txt");
-
+		ofile.open("C:\\Users\\Sugar_desktop\\Desktop\\Motion_out.txt");
 
 		//初始化
 		cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
@@ -185,13 +191,12 @@ int main(int argc, char *argv[])
 			Mat show = opticalFlow_pyramid(img1_p0, img2_p0, vel_up, 16);
 			Mat element = getStructuringElement(MORPH_RECT, Size(10, 10));
 			dilate(show, show, element);
-			imshow("2", show);
+			imshow("pyramid", show);
 
 					
 			//提取速度分量
 			split(show, show_channels);
 			speed_pixel = show_channels[0];
-
 			imshow("speed", speed_pixel);
 
 
@@ -199,13 +204,9 @@ int main(int argc, char *argv[])
 			//bilateralFilter(speed_pixel, speed_pixel_b, 3, 40, 40);
 			speed_pixel_b = speed_pixel;
 
-
-
-
 			int cols = frame.cols;
 			int rows = frame.rows;
 
-			
 			/*
 			//简单的73和37
 			filtered_bf = filtered_dly * 0.7 + noised_bf * 0.3;
@@ -253,7 +254,9 @@ int main(int argc, char *argv[])
 					if (*speed_pixel_b.ptr(i, j) >= 90) {
 						proportion[i][j] = 3;
 						*choose.ptr(i, j) = 255;
-						if (i < 8) {
+
+
+						/*if (i < 8) {
 							for (int k = 0; k < i + 8; k++) {
 								for (int z =0; z < j + 8; z++) {
 									proportion[k][z] = 2;
@@ -262,7 +265,7 @@ int main(int argc, char *argv[])
 									}
 								}
 							}
-						}
+						}						
 						else if (i >= 8) {
 							for (int k = i - 8; k < i + 8; k++) {
 								for (int z = j - 8; z < j + 10; z++) {
@@ -272,7 +275,7 @@ int main(int argc, char *argv[])
 									}
 								}
 							}
-						}					
+						}			*/		
 					}
 					else if (*speed_pixel_b.ptr(i, j) >= 40) {
 						proportion[i][j] = 1;
@@ -303,31 +306,22 @@ int main(int argc, char *argv[])
 				}
 			}
 			
-			//*/
-
-
-
-
-
-
 			imshow("Filtered", filtered);
 			imshow("Choose", choose);
 
 			//前一帧
 			filtered_dly = filtered.clone();
-
-
+			
 			//！————————————保存视频————————————！
 			Filtered << filtered;
 			Motion << speed_pixel;
 			Choosing << choose;
+			Pyramid_result << show;
 
 			//循环关键，不动
 			waitKey(1);
 			videoSource >> frame;
 			resize(frame, frame, Size(640, 480), 0, 0, INTER_AREA);
-
-
 
 			frameCount++;
 			if (frame.empty()) {
@@ -618,11 +612,14 @@ Mat opticalFlow(Mat img1, Mat img2) {
 
 
 
+
+//输入img1,img2
+//vel_up表示
 Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL) {
 	img1.convertTo(img1, CV_32F);
 	img2.convertTo(img2, CV_32F);
 	vel_up.convertTo(vel_up, CV_32F);
-	ofstream myout("C:/Users/yrhxm/Desktop/bg.txt");
+	ofstream myout("C:/Users/Sugar_desktop/Desktop/bg.txt");
 
 	int i, j, m, n;
 	int Ix, Iy, It;
