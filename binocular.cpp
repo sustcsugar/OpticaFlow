@@ -15,51 +15,122 @@ using namespace std;
 
 Mat opticalFlow(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL);
 
-int main(int argc, char** argv) {
-	cv::Mat img = cv::imread("image_bf58.png");
-	cv::Mat img1_p0 = cv::imread("image_bf58.png", 0);
-	cv::Mat img2_p0 = cv::imread("image_bf60.png", 0);
-	resize(img, img, Size(640,480), 0, 0, INTER_AREA);
-	resize(img1_p0, img1_p0, Size(640, 480), 0, 0, INTER_AREA);
-	resize(img2_p0, img2_p0, Size(640, 480), 0, 0, INTER_AREA);
+int main(int argc, char *argv[]) {
 
 
-	Mat img1_p1, img1_p2,img2_p1,img2_p2,img2_p3;
-	img1_p1 = img1_p0;
-	img2_p1 = img1_p0;
-//initial img pyr
+	//check parameter
+	cout << "argv[0]" << argv[0] << endl;
+	cout << "argv[1]" << argv[1] << endl;
+	if (argc < 2) {
+		cerr << "Usage: " << argv[0] << " YOUR_VIDEO.EXT" << std::endl;
+		return 1;
+	}
 
-	pyrDown(img1_p0, img1_p1, Size(img1_p0.cols / 2, img1_p0.rows / 2));
-	pyrDown(img1_p1, img1_p2, Size(img1_p1.cols / 2, img1_p1.rows / 2));
-	pyrDown(img2_p0, img2_p1, Size(img2_p0.cols / 2, img2_p0.rows / 2));
-	pyrDown(img2_p1, img2_p2, Size(img2_p1.cols / 2, img2_p1.rows / 2));
-	pyrDown(img2_p2, img2_p3, Size(img2_p2.cols / 2, img2_p2.rows / 2));
+	//read video
+	VideoCapture videoSource;
+	if (!videoSource.open(argv[1])) {
+		cout << "ERROR on load video..." << endl;
+		return 0;
+	}
+	Mat frame;
+	videoSource.set(CV_CAP_PROP_CONVERT_RGB, 0);
+	videoSource >> frame;
 
-//cal Gaussian pry
+	//declare Mat 
+	Mat gray = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+	Mat noise = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+	Mat noised = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+	Mat filtered_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+	Mat noised_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 
-	Mat show;
-	Mat vel_up(img2_p3.size(), CV_32FC2, Scalar(0));
-	opticalFlow(img1_p2, img2_p2, vel_up, 4);
-	opticalFlow(img1_p1, img2_p1, vel_up, 8);
-	show = opticalFlow(img1_p0, img2_p0, vel_up, 16);
-	int p1, p2;
-	//for (int i = 16 / 2; i <= 640 - 16 / 2; i += 4)//CSIZE
-	//{
-	//	for (int j = 16 / 2; j <= 480 - 16 / 2; j += 4)//CSIZE
-	//	{
-	//		if ((vel_up.at<Vec2f>(j, i)[0] > 1)&& vel_up.at<Vec2f>(j, i)[1] > 1) { 
-	//			p1 = vel_up.at<Vec2f>(j, i)[0]*10;
-	//			p2 = vel_up.at<Vec2f>(j, i)[1]*10;
-	//			arrowedLine(img, Point(i, j), Point(i - p1, j - p2), Scalar(0, 255, 0), 2, 8, 0, 0.1);
+	int frameCount = 0;
+	float noiseStd = 10;
 
-	//		}
-	//	}
-	//}
-	Mat element = getStructuringElement(MORPH_RECT, Size(10, 10));
-	dilate(show, show, element);
-//	imshow("1", img);
-	imshow("2", show);
-	waitKey(0);
+
+	//write video
+	int width = frame.cols;
+	int height = frame.rows;
+	double fps = 30;
+	char name[] = "show.avi";
+	char name2[] = "Motion.avi";
+	char name3[] = "Choosing.avi";
+
+	VideoWriter Show(name, -1, fps, Size(640, 480));
+
+
+	//初始化
+	cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
+	filtered_dly = gray.clone();
+
+	while (1) {
+		imshow("Original", frame);
+		cvtColor(frame, gray, CV_RGB2GRAY);
+		imshow("gray frame", gray);
+		randn(noise, 0, noiseStd);
+		add(gray, noise,noised,noArray(), CV_8U);
+		imshow("noised", noised);
+
+
+		Mat img = filtered_dly;
+		Mat img1_p0 = filtered_dly;
+		Mat img2_p0 = noised;
+		resize(img, img, Size(640, 480), 0, 0, INTER_AREA);
+		resize(img1_p0, img1_p0, Size(640, 480), 0, 0, INTER_AREA);
+		resize(img2_p0, img2_p0, Size(640, 480), 0, 0, INTER_AREA);
+
+
+		Mat img1_p1, img1_p2, img2_p1, img2_p2, img2_p3;
+		img1_p1 = img1_p0;
+		//img2_p1 = img1_p0;
+		img2_p1 = img2_p0; // ? 是写错了吧
+
+		//initial img pyr
+		pyrDown(img1_p0, img1_p1, Size(img1_p0.cols / 2, img1_p0.rows / 2));
+		pyrDown(img1_p1, img1_p2, Size(img1_p1.cols / 2, img1_p1.rows / 2));
+		pyrDown(img2_p0, img2_p1, Size(img2_p0.cols / 2, img2_p0.rows / 2));
+		pyrDown(img2_p1, img2_p2, Size(img2_p1.cols / 2, img2_p1.rows / 2));
+		pyrDown(img2_p2, img2_p3, Size(img2_p2.cols / 2, img2_p2.rows / 2));
+
+		Mat show;
+		Mat vel_up(img2_p3.size(), CV_32FC2, Scalar(0));
+		opticalFlow(img1_p2, img2_p2, vel_up, 4);
+		opticalFlow(img1_p1, img2_p1, vel_up, 8);
+		show = opticalFlow(img1_p0, img2_p0, vel_up, 16);
+		int p1, p2;
+		//for (int i = 16 / 2; i <= 640 - 16 / 2; i += 4)//CSIZE
+		//{
+		//cal Gaussian pry
+		//	for (int j = 16 / 2; j <= 480 - 16 / 2; j += 4)//CSIZE
+		//	{
+		//		if ((vel_up.at<Vec2f>(j, i)[0] > 1)&& vel_up.at<Vec2f>(j, i)[1] > 1) { 
+		//			p1 = vel_up.at<Vec2f>(j, i)[0]*10;
+		//			p2 = vel_up.at<Vec2f>(j, i)[1]*10;
+		//			arrowedLine(img, Point(i, j), Point(i - p1, j - p2), Scalar(0, 255, 0), 2, 8, 0, 0.1);
+
+		//		}
+		//	}
+		//}
+		Mat element = getStructuringElement(MORPH_RECT, Size(10, 10));
+		dilate(show, show, element);
+		//	imshow("1", img);
+		imshow("2_pry_show", show);
+
+		//************************   write    video   ***************** 
+		Show << show;
+
+		// 保存上一帧数据
+		filtered_dly = noised;
+
+		waitKey(1);
+
+		videoSource >> frame;
+		frameCount++;
+		if (frame.empty()) {
+			cout << endl << "Video ended!" << endl;
+			break;
+		}
+
+	}
 	return 0;
 }
 
@@ -69,7 +140,7 @@ Mat opticalFlow(Mat& img1, Mat& img2, Mat& vel_up,int CSIZE_ALL) {
 	img1.convertTo(img1, CV_32F);
 	img2.convertTo(img2, CV_32F);
 	vel_up.convertTo(vel_up, CV_32F);
-	ofstream myout("C:/Users/yrhxm/Desktop/bg.txt");
+	ofstream myout("D:/Desktop/bg.txt");
 
 	int i, j, m, n;
 	int Ix, Iy, It;
@@ -148,7 +219,7 @@ Mat opticalFlow(Mat& img1, Mat& img2, Mat& vel_up,int CSIZE_ALL) {
 			if (a < 0) { a = 0;}
 			if (a > 255) {  a = 255;}
 			myout <<a<< endl;
-			show.at<Vec3b>(y, x) = Vec3b(a, 0, 0);
+			show.at<Vec3b>(y, x) = Vec3b(0, 0, a);
 		}
 	}
 	vel_up = vel;

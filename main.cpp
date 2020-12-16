@@ -60,18 +60,18 @@ int main(int argc, char *argv[])
 		Mat noised_bf;
 		Mat noised_forin = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 
-		//Sobel参数声明
-		Mat grad_x = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat grad_y = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat abs_grad_x = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat abs_grad_y = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat sobel_noised = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat sobel_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		
-		int ksize = 1;
-		int scale = 1;
-		int delta = 0;
-		int ddepth = CV_8S;
+		////Sobel参数声明
+		//Mat grad_x = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		//Mat grad_y = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		//Mat abs_grad_x = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		//Mat abs_grad_y = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		//Mat sobel_noised = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		//Mat sobel_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		//
+		//int ksize = 1;
+		//int scale = 1;
+		//int delta = 0;
+		//int ddepth = CV_8S;
 
 
 		int frameCount = 0;
