@@ -206,9 +206,9 @@ int main(int argc, char *argv[])
 			int rows = frame.rows;
 
 			
-			/*
+			
 			//简单的73和37
-			filtered_bf = filtered_dly * 0.7 + noised_bf * 0.3;
+			filtered_bf = filtered_dly * 0.8 + noised_bf * 0.2;
 			filtered_bf2 = filtered_dly * 0.3 + noised_bf * 0.7;
 			imshow("bf", noised_bf);
 			//根据速度函数，合成输出图像
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 				//ofile << "第" << i << "行 ";
 				for (int j = 0; j < cols; j++) {
 					//判断速度阈值，选择合适的数据源
-					if (*speed_pixel_b.ptr(i, j) <= 40) {
+					if (*speed_pixel_b.ptr(i, j) <= 35) {
 						//cout << *speed_pixel.ptr(i, j) << endl;
 						*filtered.ptr(i, j) = *filtered_bf.ptr(i, j);
 						*choose.ptr(i, j) = 0;
@@ -231,79 +231,79 @@ int main(int argc, char *argv[])
 				ofile << endl;
 			}
 			ofile << endl;
-			*/
+			
 
 
-			//扩展区域的合成
-			filtered_bf82 = filtered_dly * 0.8 + noised_bf * 0.2;
-			filtered_bf73 = filtered_dly * 0.7 + noised_bf * 0.3;
-			//filtered_bf64 = filtered_dly * 0.6 + noised_bf * 0.4;
-			filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0.5;
-			filtered_bf46 = filtered_dly * 0.4 + noised_bf * 0.6;
-			filtered_bf37 = filtered_dly * 0.3 + noised_bf * 0.7;
-			//根据速度函数，得到各点图像合成比例图
-			int proportion[750][750];
-			//3——dly * 0.3 + noised_bf * 0.7;
-			//2——dly * 0.5 + noised_bf * 0.5;
-			//1——dly * 0.4 + noised_bf * 0.6;
-			//0——dly * 0.7 + noised_bf * 0.3;
+			////扩展区域的合成
+			//filtered_bf82 = filtered_dly * 0.8 + noised_bf * 0.2;
+			//filtered_bf73 = filtered_dly * 0.7 + noised_bf * 0.3;
+			////filtered_bf64 = filtered_dly * 0.6 + noised_bf * 0.4;
+			//filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0.5;
+			//filtered_bf46 = filtered_dly * 0.4 + noised_bf * 0.6;
+			//filtered_bf37 = filtered_dly * 0.3 + noised_bf * 0.7;
+			////根据速度函数，得到各点图像合成比例图
+			//int proportion[750][750];
+			////3——dly * 0.3 + noised_bf * 0.7;
+			////2——dly * 0.5 + noised_bf * 0.5;
+			////1——dly * 0.4 + noised_bf * 0.6;
+			////0——dly * 0.7 + noised_bf * 0.3;
+			//
+			//for (int i = 0; i < rows; i++) {
+			//	for (int j = 0; j < cols; j++) {
+			//		if (*speed_pixel_b.ptr(i, j) >= 90) {
+			//			proportion[i][j] = 3;
+			//			*choose.ptr(i, j) = 255;
+			//			/*if (i < 8) {
+			//				for (int k = 0; k < i + 8; k++) {
+			//					for (int z =0; z < j + 8; z++) {
+			//						proportion[k][z] = 2;
+			//						if (k <= rows && z <= cols) {
+			//							*choose.ptr(k, z) = 160;
+			//						}
+			//					}
+			//				}
+			//			}
+			//			else if (i >= 8) {
+			//				for (int k = i - 8; k < i + 8; k++) {
+			//					for (int z = j - 8; z < j + 10; z++) {
+			//						proportion[k][z] = 2;
+			//						if (k <= rows && z <= cols) {
+			//							*choose.ptr(k, z) = 160;
+			//						}
+			//					}
+			//				}
+			//			}					*/
+			//		}
+			//		else if (*speed_pixel_b.ptr(i, j) >= 40) {
+			//			proportion[i][j] = 1;
+			//			*choose.ptr(i, j) = 80;
+			//		}
+			//		else {
+			//			proportion[i][j] = 0;
+			//			*choose.ptr(i, j) = 0;
+			//		}
+			//	}
+			//}
+			//
+			////根据分布图，合成图像
+			//for (int i2 = 0; i2 < rows; i2++) {
+			//	for (int j2 = 0; j2 < cols; j2++) {
+			//		if (proportion[i2][j2] == 3) {
+			//			*filtered.ptr(i2, j2) = *filtered_bf37.ptr(i2, j2);
+			//		}
+			//		else if (proportion[i2][j2] == 2) {
+			//			*filtered.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
+			//		}
+			//		else if (proportion[i2][j2] == 1) {
+			//			*filtered.ptr(i2, j2) = *filtered_bf46.ptr(i2, j2);
+			//		}
+			//		else{
+			//			*filtered.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
+			//		}
+			//	}
+			//}
 			
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel_b.ptr(i, j) >= 90) {
-						proportion[i][j] = 3;
-						*choose.ptr(i, j) = 255;
-						if (i < 8) {
-							for (int k = 0; k < i + 8; k++) {
-								for (int z =0; z < j + 8; z++) {
-									proportion[k][z] = 2;
-									if (k <= rows && z <= cols) {
-										*choose.ptr(k, z) = 160;
-									}
-								}
-							}
-						}
-						else if (i >= 8) {
-							for (int k = i - 8; k < i + 8; k++) {
-								for (int z = j - 8; z < j + 10; z++) {
-									proportion[k][z] = 2;
-									if (k <= rows && z <= cols) {
-										*choose.ptr(k, z) = 160;
-									}
-								}
-							}
-						}					
-					}
-					else if (*speed_pixel_b.ptr(i, j) >= 40) {
-						proportion[i][j] = 1;
-						*choose.ptr(i, j) = 80;
-					}
-					else {
-						proportion[i][j] = 0;
-						*choose.ptr(i, j) = 0;
-					}
-				}
-			}
-			
-			//根据分布图，合成图像
-			for (int i2 = 0; i2 < rows; i2++) {
-				for (int j2 = 0; j2 < cols; j2++) {
-					if (proportion[i2][j2] = 3) {
-						*filtered.ptr(i2, j2) = *filtered_bf37.ptr(i2, j2);
-					}
-					else if (proportion[i2][j2] = 2) {
-						*filtered.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
-					}
-					else if (proportion[i2][j2] = 1) {
-						*filtered.ptr(i2, j2) = *filtered_bf46.ptr(i2, j2);
-					}
-					else{
-						*filtered.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
-					}
-				}
-			}
-			
-			//*/
+		
 
 
 
@@ -314,7 +314,8 @@ int main(int argc, char *argv[])
 			imshow("Choose", choose);
 
 			//前一帧
-			filtered_dly = filtered.clone();
+			//filtered_dly = filtered.clone();
+			filtered_dly = filtered;
 
 
 			//！————————————保存视频————————————！
