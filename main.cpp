@@ -24,11 +24,8 @@ using namespace std;
 #define XSIZE 720//180		
 #define YSIZE 480//120	
 
-
 Mat opticalFlow(Mat img1, Mat img2);
 Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL);
-
-
 
 
 int main(int argc, char *argv[])
@@ -39,8 +36,6 @@ int main(int argc, char *argv[])
 		cerr << "Usage: " << argv[0] << " YOUR_VIDEO.EXT" << std::endl;
 		return 1;
 	}
-	cout << "argv[0]" << argv[0] << endl;
-	cout << "argv[1]" << argv[1] << endl;
 
 	try {
 		setNumThreads(1);
@@ -50,6 +45,7 @@ int main(int argc, char *argv[])
 			cout << "ERROR on load video..." << endl;
 			return 0;
 		}
+
 		Mat frame;
 		videoSource.set(CV_CAP_PROP_CONVERT_RGB, 0);
 		videoSource >> frame;
@@ -205,10 +201,7 @@ int main(int argc, char *argv[])
 			speed_pixel_b = speed_pixel;
 
 			int cols = frame.cols;
-			int rows = frame.rows;
-
-<<<<<<< HEAD
-			
+			int rows = frame.rows;			
 			
 			//简单的73和37
 			filtered_bf = filtered_dly * 0.8 + noised_bf * 0.2;
@@ -306,84 +299,6 @@ int main(int argc, char *argv[])
 			//	}
 			//}
 			
-		
-
-
-
-
-
-
-=======
-			//扩展区域的合成
-			filtered_bf82 = filtered_dly * 0.8 + noised_bf * 0.2;
-			filtered_bf73 = filtered_dly * 0.7 + noised_bf * 0.3;
-			//filtered_bf64 = filtered_dly * 0.6 + noised_bf * 0.4;
-			filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0.5;
-			filtered_bf46 = filtered_dly * 0.4 + noised_bf * 0.6;
-			filtered_bf37 = filtered_dly * 0.3 + noised_bf * 0.7;
-			//根据速度函数，得到各点图像合成比例图
-			int proportion[750][750];
-			//3——dly * 0.3 + noised_bf * 0.7;
-			//2——dly * 0.5 + noised_bf * 0.5;
-			//1——dly * 0.4 + noised_bf * 0.6;
-			//0——dly * 0.7 + noised_bf * 0.3;
-			
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel_b.ptr(i, j) >= 90) {
-						proportion[i][j] = 3;
-						*choose.ptr(i, j) = 255;
-
-
-						/*if (i < 8) {
-							for (int k = 0; k < i + 8; k++) {
-								for (int z =0; z < j + 8; z++) {
-									proportion[k][z] = 2;
-									if (k <= rows && z <= cols) {
-										*choose.ptr(k, z) = 160;
-									}
-								}
-							}
-						}						
-						else if (i >= 8) {
-							for (int k = i - 8; k < i + 8; k++) {
-								for (int z = j - 8; z < j + 10; z++) {
-									proportion[k][z] = 2;
-									if (k <= rows && z <= cols) {
-										*choose.ptr(k, z) = 160;
-									}
-								}
-							}
-						}			*/		
-					}
-					else if (*speed_pixel_b.ptr(i, j) >= 40) {
-						proportion[i][j] = 1;
-						*choose.ptr(i, j) = 80;
-					}
-					else {
-						proportion[i][j] = 0;
-						*choose.ptr(i, j) = 0;
-					}
-				}
-			}
-			
-			//根据分布图，合成图像
-			for (int i2 = 0; i2 < rows; i2++) {
-				for (int j2 = 0; j2 < cols; j2++) {
-					if (proportion[i2][j2] = 3) {
-						*filtered.ptr(i2, j2) = *filtered_bf37.ptr(i2, j2);
-					}
-					else if (proportion[i2][j2] = 2) {
-						*filtered.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
-					}
-					else if (proportion[i2][j2] = 1) {
-						*filtered.ptr(i2, j2) = *filtered_bf46.ptr(i2, j2);
-					}
-					else{
-						*filtered.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
-					}
-				}
-			}
 			
 			imshow("Filtered", filtered);
 			imshow("Choose", choose);
@@ -552,6 +467,8 @@ Mat opticalFlow(Mat img1, Mat img2) {
 
 
 //1x1代码
+//需要添加函数的注释,参数说明
+//
 Mat opticalFlow(Mat img1, Mat img2) {
 	img1.convertTo(img1, CV_32F);
 	img2.convertTo(img2, CV_32F);
@@ -615,15 +532,12 @@ Mat opticalFlow(Mat img1, Mat img2) {
 				sxysyt[x][y] = sxy * syt;
 				sxxsyt[x][y] = sxx * syt;
 				sxysxt[x][y] = sxy * sxt;
-
 			}
 			else
 			{
 				velx[x][y] = 0;
 				vely[x][y] = 0;
-
 			}
-
 		}
 	float d1, d2;
 	float max = 0;
@@ -650,9 +564,7 @@ Mat opticalFlow(Mat img1, Mat img2) {
 		}
 	cout << max << endl;
 	cv::Mat show(row, col, CV_8UC3);
-
-
-
+	
 	for (int i = 0; i < XSIZE - 0; i++) {
 		for (int j = 0; j < YSIZE - 0; j++) {
 			int y = j * 1;//CSIZE
