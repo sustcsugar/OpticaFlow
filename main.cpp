@@ -10,7 +10,6 @@
 #include "opencv2/video/tracking.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
-
 #include <fstream>
 
 #define ATD at<double>
@@ -94,7 +93,6 @@ int main(int argc, char *argv[])
 		char name[] = "Filtered.avi";
 		char name2[] = "Motion.avi";
 		char name3[] = "Choosing.avi";
-		//char name4[] = "OP.avi";
 
 		VideoWriter Filtered(name, -1, fps, Size(width, height));
 		VideoWriter Motion(name2, -1, fps, Size(width, height));
@@ -102,15 +100,14 @@ int main(int argc, char *argv[])
 		//VideoWriter OP(name4, -1, fps, Size(width, height));
 
 		
-		////存储文件用
-		//ofstream ofile;
-		//ofile.open("C:\\Users\\Sugar_desktop\\Desktop\\Motion_out.txt");
+		//存储文件用
+		ofstream ofile;
+		ofile.open("D:\\Desktop\\OptialFlow\\speed.txt");
 
 		//初始化
 		cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
 		//imshow("Gray Frame", gray);
 		//filtered_dly = gray.clone();
-
 		//noised_bf_dly = gray.clone();
 
 
@@ -198,11 +195,11 @@ int main(int argc, char *argv[])
 			//简单的73和37
 			filtered_bf = filtered_dly * 0.8 + noised_bf * 0.2;
 			filtered_bf2 = filtered_dly * 0.3 + noised_bf * 0.7;
-			
 
 			//根据速度函数，合成输出图像
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
+					ofile << (int)*speed_pixel.ptr(i, j) << " ";
 					//判断速度阈值，选择合适的数据源
 					if (*speed_pixel.ptr(i, j) <= 35) {
 						*filtered.ptr(i, j) = *filtered_bf.ptr(i, j);
@@ -213,12 +210,9 @@ int main(int argc, char *argv[])
 						*choose.ptr(i, j) = 255;
 					}
 				}
-				
-			}
+				ofile << endl;
+			} 
 			
-			
-
-
 			////扩展区域的合成
 			//filtered_bf82 = filtered_dly * 0.8 + noised_bf * 0.2;
 			//filtered_bf73 = filtered_dly * 0.7 + noised_bf * 0.3;
@@ -300,6 +294,7 @@ int main(int argc, char *argv[])
 			Choosing << choose;
 
 			cout << "当前帧数:" << frameCount << " ;" << endl;
+			ofile << endl << endl;
 
 			//循环关键，不动
 			waitKey(1);
@@ -314,7 +309,7 @@ int main(int argc, char *argv[])
 				break;
 			}
 		}
-		//ofile.close();
+		ofile.close();
 	}
 	catch (const Exception& ex) {
 		cout << "Error: " << ex.what() << endl;
@@ -550,7 +545,7 @@ Mat opticalFlow(Mat img1, Mat img2) {
 			}
 			double speed = sqrt(d1 * d1 + d2 * d2);
 			speedmax[i][j] = speed;
-			if ((max < speed) && (speed < 10)) { max = speed; }
+			if ((max < speed) && (speed < 10)) { max = speed; } //???
 		}
 	cout << max << endl;
 	cv::Mat show(row, col, CV_8UC3);
