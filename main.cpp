@@ -185,33 +185,31 @@ int main(int argc, char *argv[])
 			//提取速度分量
 			split(show, show_channels);
 			speed_pixel = show_channels[0];
-			imshow("speed", speed_pixel);
+			imshow("speed", speed_pixel);	
 
-
-
+			int rows = frame.rows;
 			int cols = frame.cols;
-			int rows = frame.rows;			
 
-			//简单的73和37
-			filtered_bf = filtered_dly * 0.8 + noised_bf * 0.2;
-			filtered_bf2 = filtered_dly * 0.3 + noised_bf * 0.7;
+			////简单的73和37
+			//filtered_bf = filtered_dly * 0.8 + noised_bf * 0.2;
+			//filtered_bf2 = filtered_dly * 0.3 + noised_bf * 0.7;
 
-			//根据速度函数，合成输出图像
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < cols; j++) {
-					ofile << (int)*speed_pixel.ptr(i, j) << " ";
-					//判断速度阈值，选择合适的数据源
-					if (*speed_pixel.ptr(i, j) <= 35) {
-						*filtered.ptr(i, j) = *filtered_bf.ptr(i, j);
-						*choose.ptr(i, j) = 0;
-					}
-					else {
-						*filtered.ptr(i, j) = *filtered_bf2.ptr(i, j);
-						*choose.ptr(i, j) = 255;
-					}
-				}
-				ofile << endl;
-			} 
+			////根据速度函数，合成输出图像
+			//for (int i = 0; i < rows; i++) {
+			//	for (int j = 0; j < cols; j++) {
+			//		ofile << (int)*speed_pixel.ptr(i, j) << " ";
+			//		//判断速度阈值，选择合适的数据源
+			//		if (*speed_pixel.ptr(i, j) <= 35) {
+			//			*filtered.ptr(i, j) = *filtered_bf.ptr(i, j);
+			//			*choose.ptr(i, j) = 0;
+			//		}
+			//		else {
+			//			*filtered.ptr(i, j) = *filtered_bf2.ptr(i, j);
+			//			*choose.ptr(i, j) = 255;
+			//		}
+			//	}
+			//	ofile << endl;
+			//} 
 			
 			////扩展区域的合成
 			//filtered_bf82 = filtered_dly * 0.8 + noised_bf * 0.2;
@@ -281,6 +279,127 @@ int main(int argc, char *argv[])
 			//		}
 			//	}
 			//}
+
+
+
+
+
+			int proportion[750][750];
+
+			//边框默认不运动,金字塔算法中边框的13个像素点是255，这里修改为0
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (i <= 13 || j <= 13 || i >= rows - 13 || j >= cols - 13) {
+						*speed_pixel.ptr(i, j) = 0;
+					}
+				}
+			}
+			int pz = 20;//高速度周围膨胀像素点
+			int pz2 = 15;//一般速度周围膨胀像素点
+			//静止区域
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (*speed_pixel.ptr(i, j) < 30) {
+						proportion[i][j] = 0;	//根据这个分配合成比例
+						*choose.ptr(i, j) = 0;	//观察用
+					}
+				}
+			}
+			//低速周围扩展
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (*speed_pixel.ptr(i, j) >= 30) {
+						//proportion[i][j] = 1;
+						//*choose.ptr(i, j) = 80;
+						if (i < pz2 && j< pz2) {
+							for (int k = 0; k < i + pz2; k++) {
+								for (int z = 0; z < j + pz2; z++) {
+									proportion[k][z] = 1;
+									if (k < rows && z < cols) {
+										*choose.ptr(k, z) = 80;
+									}
+								}
+							}
+						}
+						else if (i < pz2 && j > pz2){
+
+						}
+						if (i >= pz2 && j >= pz2) {
+							for (int k = i - pz2; k <= i + pz2; k++) {
+								for (int z = j - pz2; z <= j + pz2; z++) {
+									proportion[k][z] = 1;
+									if (k < rows && z < cols) {
+										*choose.ptr(k, z) = 80;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			//高速周围扩展
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (*speed_pixel.ptr(i, j) >= 65) {
+						//proportion[i][j] = 3;
+						//*choose.ptr(i, j) = 255;
+						if (i < pz) {
+							for (int k = 0; k < i + pz; k++) {
+								for (int z = 0; z < j + pz; z++) {
+									proportion[k][z] = 2;
+									if (k < rows && z < cols) {
+										*choose.ptr(k, z) = 160;
+									}
+								}
+							}
+						}
+						if (i >= pz && j >= pz) {
+							for (int k = i - pz; k <= i + pz; k++) {
+								for (int z = j - pz; z <= j + pz; z++) {
+									proportion[k][z] = 2;
+									if (k < rows && z < cols) {
+										*choose.ptr(k, z) = 160;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			//高速中心区域填回
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (*speed_pixel.ptr(i, j) >= 65) {
+						proportion[i][j] = 3;
+						*choose.ptr(i, j) = 255;
+					}
+				}
+			}
+
+
+			//根据分布图，合成图像
+			for (int i2 = 0; i2 < rows; i2++) {
+				for (int j2 = 0; j2 < cols; j2++) {
+					if (proportion[i2][j2] == 0) {
+						*filtered.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
+					}
+					else if (proportion[i2][j2] == 1) {
+						*filtered.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
+					}
+					else if (proportion[i2][j2] == 2) {
+						*filtered.ptr(i2, j2) = *filtered_bf46.ptr(i2, j2);
+					}
+					else {
+						*filtered.ptr(i2, j2) = *filtered_bf37.ptr(i2, j2);
+					}
+				}
+			}
+
+
+
+
+
+
 			
 			imshow("Filtered", filtered);
 			imshow("Choose", choose);
