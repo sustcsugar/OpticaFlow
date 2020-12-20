@@ -25,6 +25,7 @@ using namespace std;
 
 Mat opticalFlow(Mat img1, Mat img2);
 Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL);
+int max(double a, double b);
 
 
 int main(int argc, char *argv[])
@@ -125,7 +126,7 @@ int main(int argc, char *argv[])
 			//blur(noised, noised_mb, Size(3, 3));
 			bilateralFilter(noised, noised_bf, 3, 40, 40);
 			imshow("noised_bf", noised_bf);
-			filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0, 5;
+			//filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0, 5;
 
 
 			////Sobel求轮廓
@@ -219,71 +220,7 @@ int main(int argc, char *argv[])
 			filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0.5;
 			filtered_bf46 = filtered_dly * 0.4 + noised_bf * 0.6;
 			filtered_bf37 = filtered_dly * 0.3 + noised_bf * 0.7;
-			////根据速度函数，得到各点图像合成比例图
-			//int proportion[750][750];
-			////3——dly * 0.3 + noised_bf * 0.7;
-			////2——dly * 0.5 + noised_bf * 0.5;
-			////1——dly * 0.4 + noised_bf * 0.6;
-			////0——dly * 0.7 + noised_bf * 0.3;
-			//
-			//for (int i = 0; i < rows; i++) {
-			//	for (int j = 0; j < cols; j++) {speed_pixel
-			//		if (*speed_pixel.ptr(i, j) >= 90) {
-			//			proportion[i][j] = 3;
-			//			*choose.ptr(i, j) = 255;
-			//			/*if (i < 8) {
-			//				for (int k = 0; k < i + 8; k++) {
-			//					for (int z =0; z < j + 8; z++) {
-			//						proportion[k][z] = 2;
-			//						if (k <= rows && z <= cols) {
-			//							*choose.ptr(k, z) = 160;
-			//						}
-			//					}
-			//				}
-			//			}
-			//			else if (i >= 8) {
-			//				for (int k = i - 8; k < i + 8; k++) {
-			//					for (int z = j - 8; z < j + 10; z++) {
-			//						proportion[k][z] = 2;
-			//						if (k <= rows && z <= cols) {
-			//							*choose.ptr(k, z) = 160;
-			//						}
-			//					}
-			//				}
-			//			}					*/
-			//		}
-			//		else if (*speed_pixel.ptr(i, j) >= 40) {
-			//			proportion[i][j] = 1;
-			//			*choose.ptr(i, j) = 80;
-			//		}
-			//		else {
-			//			proportion[i][j] = 0;
-			//			*choose.ptr(i, j) = 0;
-			//		}
-			//	}
-			//}
-			//
-			////根据分布图，合成图像
-			//for (int i2 = 0; i2 < rows; i2++) {
-			//	for (int j2 = 0; j2 < cols; j2++) {
-			//		if (proportion[i2][j2] == 3) {
-			//			*filtered.ptr(i2, j2) = *filtered_bf37.ptr(i2, j2);
-			//		}
-			//		else if (proportion[i2][j2] == 2) {
-			//			*filtered.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
-			//		}
-			//		else if (proportion[i2][j2] == 1) {
-			//			*filtered.ptr(i2, j2) = *filtered_bf46.ptr(i2, j2);
-			//		}
-			//		else{
-			//			*filtered.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
-			//		}
-			//	}
-			//}
-
-
-
-
+		
 
 			int proportion[750][750];
 
@@ -445,21 +382,28 @@ int main(int argc, char *argv[])
 
 			//wxl*********
 			//边框默认不运动,金字塔算法中边框的13个像素点是255，这里修改为0
+			///*线性扩展
+			//根据速度函数，得到各点图像合成比例图
+			//这里的proportion取值从20到0；
+			//边框默认不运动,光流法算法中边框的3个像素点是255，这里修改为0
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (i <= 13 || j <= 13 || i >= rows - 13 || j >= cols - 13) {
+					if (i <= 3 || j <= 3 || i >= rows - 3 || j >= cols - 3) {
 						*speed_pixel.ptr(i, j) = 0;
 					}
 				}
 			}
-			int pz = 20;//高速度周围膨胀像素点
-			int pz2 = 15;//一般速度周围膨胀像素点
+			double d_high = 50;//高速区域扩展距离
+			double d_low = 30;//低速
+
+			double q_high = 50;//高速区域扩展中心强度
+			double q_low = 30;
+
 			//静止区域
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
 					if (*speed_pixel.ptr(i, j) < 30) {
-						proportion[i][j] = 0;	//根据这个分配合成比例
-						*choose.ptr(i, j) = 0;	//观察用
+						proportion[i][j] = 0;
 					}
 				}
 			}
@@ -467,25 +411,12 @@ int main(int argc, char *argv[])
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
 					if (*speed_pixel.ptr(i, j) >= 30) {
-						//proportion[i][j] = 1;
-						//*choose.ptr(i, j) = 80;
-						if (i < pz2) {
-							for (int k = 0; k < i + pz2; k++) {
-								for (int z = 0; z < j + pz2; z++) {
-									proportion[k][z] = 1;
-									if (k < rows && z < cols) {
-										*choose.ptr(k, z) = 80;
-									}
-								}
-							}
-						}
-						if (i >= pz2 && j >= pz2) {
-							for (int k = i - pz2; k <= i + pz2; k++) {
-								for (int z = j - pz2; z <= j + pz2; z++) {
-									proportion[k][z] = 1;
-									if (k < rows && z < cols) {
-										*choose.ptr(k, z) = 80;
-									}
+						//记住，待修改
+						for (int k = 0; k < rows; k++) {
+							for (int z = 0; z < cols; z++) {
+								double distance = sqrt((i - k)*(i - k) + (j - z)*(j - z));
+								if (d_low - distance >= 0) {
+									proportion[k][z] = max(proportion[k][z], (-(d_low / (q_low*q_low))*distance*distance + q_low));
 								}
 							}
 						}
@@ -495,60 +426,33 @@ int main(int argc, char *argv[])
 			//高速周围快扩展
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel.ptr(i, j) >= 65) {
-						//proportion[i][j] = 3;
-						//*choose.ptr(i, j) = 255;
-						if (i < pz) {
-							for (int k = 0; k < i + pz; k++) {
-								for (int z = 0; z < j + pz; z++) {
-									proportion[k][z] = 2;
-									if (k < rows && z < cols) {
-										*choose.ptr(k, z) = 160;
-									}
-								}
-							}
-						}
-						if (i >= pz && j >= pz) {
-							for (int k = i - pz; k <= i + pz; k++) {
-								for (int z = j - pz; z <= j + pz; z++) {
-									proportion[k][z] = 2;
-									if (k < rows && z < cols) {
-										*choose.ptr(k, z) = 160;
-									}
+					if (*speed_pixel.ptr(i, j) >= 55) {
+						for (int k = 0; k < rows; k++) {
+							for (int z = 0; z < cols; z++) {
+								double distance = sqrt((i - k)*(i - k) + (j - z)*(j - z));
+								if (d_high - distance >= 0) {
+									proportion[k][z] = max(proportion[k][z], (-(d_high / (q_high*q_high))*distance*distance + q_high));
 								}
 							}
 						}
 					}
 				}
 			}
-			//高速中心区域填回
+
+			//观察用
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel.ptr(i, j) >= 65) {
-						proportion[i][j] = 3;
-						*choose.ptr(i, j) = 255;
-					}
+					*choose.ptr(i, j) = proportion[i][j] * (255 / q_high);
 				}
 			}
-
 
 			//根据分布图，合成图像
-			for (int i2 = 0; i2 < rows; i2++) {
-				for (int j2 = 0; j2 < cols; j2++) {
-					if (proportion[i2][j2] == 0) {
-						*filtered.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
-					}
-					else if (proportion[i2][j2] == 1) {
-						*filtered.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
-					}
-					else if (proportion[i2][j2] == 2) {
-						*filtered.ptr(i2, j2) = *filtered_bf46.ptr(i2, j2);
-					}
-					else {
-						*filtered.ptr(i2, j2) = *filtered_bf37.ptr(i2, j2);
-					}
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					*filtered.ptr(i, j) = (0.8 - 0.6*(proportion[i][j] / q_high))**filtered_dly.ptr(i, j) + (0.2 + 0.6*(proportion[i][j] / q_high))**noised_bf.ptr(i, j);
 				}
 			}
+			//*/
 
 
 
@@ -952,4 +856,10 @@ Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL) {
 	}
 	vel_up = vel;
 	return show;
+}
+
+
+int max(double a, double b)
+{
+	if (a > b) return a; return b;
 }
