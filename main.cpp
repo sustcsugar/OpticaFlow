@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
 			//blur(noised, noised_mb, Size(3, 3));
 			bilateralFilter(noised, noised_bf, 3, 40, 40);
 			imshow("noised_bf", noised_bf);
+			filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0, 5;
 
 
 			////Sobel求轮廓
@@ -155,7 +156,7 @@ int main(int argc, char *argv[])
 
 			//光流法
 			//Mat show = opticalFlow(dst1, dst2);
-			Mat show = opticalFlow(noised_bf, filtered_dly);
+			Mat show = opticalFlow(filtered_bf55, noised_bf);
 
 			////金字塔光流
 			//	//声明
@@ -286,6 +287,163 @@ int main(int argc, char *argv[])
 
 			int proportion[750][750];
 
+			////边框默认不运动,金字塔算法中边框的13个像素点是255，这里修改为0
+			//for (int i = 0; i < rows; i++) {
+			//	for (int j = 0; j < cols; j++) {
+			//		if (i <= 13 || j <= 13 || i >= rows - 13 || j >= cols - 13) {
+			//			*speed_pixel.ptr(i, j) = 0;
+			//		}
+			//	}
+			//}
+			//int pz = 20;//高速度周围膨胀像素点
+			//int pz2 = 15;//一般速度周围膨胀像素点
+
+			////*********************静止区域
+			//for (int i = 0; i < rows; i++) {
+			//	for (int j = 0; j < cols; j++) {
+			//		if (*speed_pixel.ptr(i, j) < 30) {		
+			//			proportion[i][j] = 0;	//根据这个分配合成比例
+			//			*choose.ptr(i, j) = 0;	//choose矩阵用来观察
+			//		}
+			//	}
+			//}
+
+			////******************低速区域块扩展
+			////proportion[i][j] = 1;
+			////*choose.ptr(i, j) = 80;
+			//for (int i = 0; i < rows; i++) {
+			//	for (int j = 0; j < cols; j++) {
+			//		if (*speed_pixel.ptr(i, j) > 30) { 							
+			//			if (i < pz2 && j < pz2) {
+			//				for (int k = 0; k < i + pz2; k++) {
+			//					for (int z = 0; z < j + pz2; z++) {
+			//						proportion[k][z] = 1;
+			//						if (k < rows && z < cols) {
+			//							*choose.ptr(k, z) = 80;
+			//						}
+			//					}
+			//				}
+			//			}
+			//			if (i < pz2 && j > pz2) {
+			//				for (int k = 0; k < i + pz2; k++) {
+			//					for (int z = j - pz2; z < j + pz2; z++) {
+			//						proportion[k][z] = 1;
+			//						if (k < rows && z < cols) {
+			//							*choose.ptr(k, z) = 80;
+			//						}
+			//					}
+			//				}
+			//			}
+			//			if (i > pz2 && j < pz2) {
+			//				for (int k = i - pz2; k < i + pz2; k++) {
+			//					for (int z = 0; z < j + pz2; z++) {
+			//						proportion[k][z] = 1;
+			//						if (k < rows && z < cols) {
+			//							*choose.ptr(k, z) = 80;
+			//						}
+			//					}
+			//				}
+			//			}
+			//			if (i > pz2 && j > pz2) {
+			//				for (int k = i - pz2; k <= i + pz2; k++) {
+			//					for (int z = j - pz2; z <= j + pz2; z++) {
+			//						proportion[k][z] = 1;
+			//						if (k < rows && z < cols) {
+			//							*choose.ptr(k, z) = 80;
+			//						}
+			//					}
+			//				}
+			//			}	
+			//		}
+			//	}
+			//}
+
+			////*******************高速区域块扩展
+			////proportion[i][j] = 2;
+			////*choose.ptr(i, j) = 160;
+			//for (int i = 0; i < rows; i++) {
+			//	for (int j = 0; j < cols; j++) {
+			//		if (*speed_pixel.ptr(i, j) > 65) {
+			//			if (i < pz && j < pz) {
+			//				for (int k = 0; k < i + pz; k++) {
+			//					for (int z = 0; z < j + pz; z++) {
+			//						proportion[k][z] = 2;
+			//						if (k < rows && z < cols) {
+			//							*choose.ptr(k, z) = 160;
+			//						}
+			//					}
+			//				}
+			//			}
+			//			if (i < pz && j > pz) {
+			//				for (int k = 0; k < i + pz; k++) {
+			//					for (int z = j - pz; z < j + pz; z++) {
+			//						proportion[k][z] = 2;
+			//						if (k < rows && z < cols) {
+			//							*choose.ptr(k, z) = 160;
+			//						}
+			//					}
+			//				}
+			//			}
+			//			if (i > pz && j < pz) {
+			//				for (int k = i - pz; k < i + pz; k++) {
+			//					for (int z = 0; z < j + pz; z++) {
+			//						proportion[k][z] = 2;
+			//						if (k < rows && z < cols) {
+			//							*choose.ptr(k, z) = 160;
+			//						}
+			//					}
+			//				}
+			//			}
+			//			if (i >= pz && j >= pz) {
+			//				for (int k = i - pz; k <= i + pz; k++) {
+			//					for (int z = j - pz; z <= j + pz; z++) {
+			//						proportion[k][z] = 2;
+			//						if (k < rows && z < cols) {
+			//							*choose.ptr(k, z) = 160;
+			//						}
+			//					}
+			//				}
+			//			}
+			//		}
+			//	}
+			//}
+
+			////高速区域填回
+			////3,155
+			//for (int i = 0; i < rows; i++) {
+			//	for (int j = 0; j < cols; j++) {
+			//		if (*speed_pixel.ptr(i, j) > 65) {
+			//			proportion[i][j] = 3;
+			//			*choose.ptr(i, j) = 255;
+			//		}
+			//	}
+			//}
+
+			////根据分布图，合成图像
+			//for (int i = 0; i < rows; i++) {
+			//	for (int j = 0; j < cols; j++) {
+			//		if (proportion[i][j] == 0) {
+			//			*filtered.ptr(i, j) = *filtered_bf82.ptr(i, j);
+			//		}
+			//		else if (proportion[i][j] == 1) {
+			//			*filtered.ptr(i, j) = *filtered_bf55.ptr(i, j);
+			//		}
+			//		else if (proportion[i][j] == 2) {
+			//			*filtered.ptr(i, j) = *filtered_bf46.ptr(i, j);
+			//		}
+			//		else {
+			//			*filtered.ptr(i, j) = *filtered_bf37.ptr(i, j);
+			//		}
+			//	}
+			//}				
+
+
+
+
+
+
+
+			//wxl*********
 			//边框默认不运动,金字塔算法中边框的13个像素点是255，这里修改为0
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
@@ -296,25 +454,22 @@ int main(int argc, char *argv[])
 			}
 			int pz = 20;//高速度周围膨胀像素点
 			int pz2 = 15;//一般速度周围膨胀像素点
-
-			//*********************静止区域
+			//静止区域
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel.ptr(i, j) < 30) {		
+					if (*speed_pixel.ptr(i, j) < 30) {
 						proportion[i][j] = 0;	//根据这个分配合成比例
-						*choose.ptr(i, j) = 0;	//choose矩阵用来观察
+						*choose.ptr(i, j) = 0;	//观察用
 					}
 				}
 			}
-
-			//******************低速区域块扩展
-			//proportion[i][j] = 1;
-			//*choose.ptr(i, j) = 80;
+			//低速周围快扩展
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-
-					if (*speed_pixel.ptr(i, j) > 30) { 							
-						if (i < pz2 && j < pz2) {
+					if (*speed_pixel.ptr(i, j) >= 30) {
+						//proportion[i][j] = 1;
+						//*choose.ptr(i, j) = 80;
+						if (i < pz2) {
 							for (int k = 0; k < i + pz2; k++) {
 								for (int z = 0; z < j + pz2; z++) {
 									proportion[k][z] = 1;
@@ -324,27 +479,7 @@ int main(int argc, char *argv[])
 								}
 							}
 						}
-						if (i < pz2 && j > pz2) {
-							for (int k = 0; k < i + pz2; k++) {
-								for (int z = j - pz2; z < j + pz2; z++) {
-									proportion[k][z] = 1;
-									if (k < rows && z < cols) {
-										*choose.ptr(k, z) = 80;
-									}
-								}
-							}
-						}
-						if (i > pz2 && j < pz2) {
-							for (int k = i - pz2; k < i + pz2; k++) {
-								for (int z = 0; z < j + pz2; z++) {
-									proportion[k][z] = 1;
-									if (k < rows && z < cols) {
-										*choose.ptr(k, z) = 80;
-									}
-								}
-							}
-						}
-						if (i > pz2 && j > pz2) {
+						if (i >= pz2 && j >= pz2) {
 							for (int k = i - pz2; k <= i + pz2; k++) {
 								for (int z = j - pz2; z <= j + pz2; z++) {
 									proportion[k][z] = 1;
@@ -353,41 +488,18 @@ int main(int argc, char *argv[])
 									}
 								}
 							}
-						}	
+						}
 					}
 				}
 			}
-
-			//*******************高速区域块扩展
-			//proportion[i][j] = 2;
-			//*choose.ptr(i, j) = 160;
+			//高速周围快扩展
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-
-					if (*speed_pixel.ptr(i, j) > 65) {
-
-						if (i < pz && j < pz) {
+					if (*speed_pixel.ptr(i, j) >= 65) {
+						//proportion[i][j] = 3;
+						//*choose.ptr(i, j) = 255;
+						if (i < pz) {
 							for (int k = 0; k < i + pz; k++) {
-								for (int z = 0; z < j + pz; z++) {
-									proportion[k][z] = 2;
-									if (k < rows && z < cols) {
-										*choose.ptr(k, z) = 160;
-									}
-								}
-							}
-						}
-						if (i < pz && j > pz) {
-							for (int k = 0; k < i + pz; k++) {
-								for (int z = j - pz; z < j + pz; z++) {
-									proportion[k][z] = 2;
-									if (k < rows && z < cols) {
-										*choose.ptr(k, z) = 160;
-									}
-								}
-							}
-						}
-						if (i > pz && j < pz) {
-							for (int k = i - pz; k < i + pz; k++) {
 								for (int z = 0; z < j + pz; z++) {
 									proportion[k][z] = 2;
 									if (k < rows && z < cols) {
@@ -409,41 +521,45 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-
-			//高速区域填回
-			//3,155
+			//高速中心区域填回
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel.ptr(i, j) > 65) {
+					if (*speed_pixel.ptr(i, j) >= 65) {
 						proportion[i][j] = 3;
 						*choose.ptr(i, j) = 255;
 					}
 				}
 			}
 
+
 			//根据分布图，合成图像
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < cols; j++) {
-					if (proportion[i][j] == 0) {
-						*filtered.ptr(i, j) = *filtered_bf82.ptr(i, j);
+			for (int i2 = 0; i2 < rows; i2++) {
+				for (int j2 = 0; j2 < cols; j2++) {
+					if (proportion[i2][j2] == 0) {
+						*filtered.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
 					}
-					else if (proportion[i][j] == 1) {
-						*filtered.ptr(i, j) = *filtered_bf55.ptr(i, j);
+					else if (proportion[i2][j2] == 1) {
+						*filtered.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
 					}
-					else if (proportion[i][j] == 2) {
-						*filtered.ptr(i, j) = *filtered_bf46.ptr(i, j);
+					else if (proportion[i2][j2] == 2) {
+						*filtered.ptr(i2, j2) = *filtered_bf46.ptr(i2, j2);
 					}
 					else {
-						*filtered.ptr(i, j) = *filtered_bf37.ptr(i, j);
+						*filtered.ptr(i2, j2) = *filtered_bf37.ptr(i2, j2);
 					}
 				}
-			}					   			 
+			}
+
+
+
+
+
 			
 			imshow("Filtered", filtered);
 			imshow("Choose", choose);
 			//前一帧
-			//filtered_dly = filtered.clone();
-			filtered_dly = filtered;
+			filtered_dly = filtered.clone();
+			//filtered_dly = filtered;
 
 			//！————————————保存视频————————————！
 			Filtered << filtered;
@@ -451,7 +567,7 @@ int main(int argc, char *argv[])
 			Choosing << choose;
 
 			cout << "当前帧数:" << frameCount << " /162 (5s);" << endl;
-			ofile << endl << endl;
+			//ofile << endl << endl;
 
 			//循环关键，不动
 			waitKey(1);
