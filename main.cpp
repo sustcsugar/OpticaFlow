@@ -10,6 +10,7 @@
 #include "opencv2/video/tracking.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
+
 #include <fstream>
 
 #define ATD at<double>
@@ -20,12 +21,12 @@ using namespace std;
 
 //video:720*480
 #define CSIZE 4
-#define XSIZE 720//180		
-#define YSIZE 480//120	
-
+#define XSIZE 640//180		
+#define YSIZE 480//120		
 Mat opticalFlow(Mat img1, Mat img2);
 Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL);
 int max(double a, double b);
+
 
 
 int main(int argc, char *argv[])
@@ -36,6 +37,8 @@ int main(int argc, char *argv[])
 		cerr << "Usage: " << argv[0] << " YOUR_VIDEO.EXT" << std::endl;
 		return 1;
 	}
+	cout << "argv[0]" << argv[0] << endl;
+	cout << "argv[1]" << argv[1] << endl;
 
 	try {
 		setNumThreads(1);
@@ -45,49 +48,63 @@ int main(int argc, char *argv[])
 			cout << "ERROR on load video..." << endl;
 			return 0;
 		}
-
 		Mat frame;
 		videoSource.set(CV_CAP_PROP_CONVERT_RGB, 0);
 		videoSource >> frame;
-		
-		//调整图像尺寸
-		//resize(frame, frame, Size(640, 480), 0, 0, INTER_AREA);
-
-		//图像矩阵声明
-		Mat noised_dly		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat gray			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat noised			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered2		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_mb		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf2	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf82	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf73	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf64	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf55	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf46	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf37	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_bf28	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered_dly	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat filtered2_dly	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-
-		Mat noised_mb		= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat noised_dly_mb	= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
-		Mat choose			= Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		resize(frame, frame, Size(640, 480), 0, 0, INTER_AREA);
 
 
-		Mat noise			= Mat(frame.size(), CV_16S);
+		Mat moised_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat gray = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat noised = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered2 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_mb = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf2 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf82 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf73 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf64 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf55 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf46 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf37 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_bf28 = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat filtered2_dly = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat noised_mb = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat noised_dly_mb = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat choose = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+		Mat noise = Mat(frame.size(), CV_16S);
 		Mat show_channels[3];
 		Mat speed_pixel;
+		Mat show_channels2[3];
+		Mat speed_pixel2;
+
+		Mat for_motion = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
+
+		Mat speed_pixel_b;
 		Mat noised_bf;
 		Mat noised_bf_dly;
 		Mat noised_forin = Mat(Size(frame.cols, frame.rows), CV_8UC1, Scalar(255));
 
+		Mat grad_x1, grad_y1;
+		Mat grad_x2, grad_y2;
+		Mat abs_grad_x1, abs_grad_y1, dst1;
+		Mat abs_grad_x2, abs_grad_y2, dst2;
+
+		double proportion[750][750];
+		for (int i = 0; i < 750; i++) {
+			for (int j = 0; j < 750; j++) {
+				proportion[i][j] = 2;
+			}
+		}
+
+
+
 		int frameCount = 0;
-		float noiseStd = 10;	//生成noise的参数
+		float noiseStd = 10;
 		
-		//写入视频用
+		//存储视频用
 		int width = frame.cols;
 		int height = frame.rows;
 		double fps = 30;
@@ -98,325 +115,211 @@ int main(int argc, char *argv[])
 		VideoWriter Filtered(name, -1, fps, Size(width, height));
 		VideoWriter Motion(name2, -1, fps, Size(width, height));
 		VideoWriter Choosing(name3, -1, fps, Size(width, height));
-		//VideoWriter OP(name4, -1, fps, Size(width, height));
 
 		
 		//存储文件用
 		ofstream ofile;
-		ofile.open("D:\\Desktop\\OptialFlow\\speed.txt");
+		ofile.open("C:\\Document\\3D除噪\\Motion_out.txt");
+
+
 
 		//初始化
 		cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
-		//imshow("Gray Frame", gray);
-		//filtered_dly = gray.clone();
-		//noised_bf_dly = gray.clone();
+		filtered_dly = gray.clone();
+		noised_bf_dly= gray.clone();
+		noised_bf_dly = gray.clone();
+
+
+
+
 
 
 		while (1) {
-			//！————————————加噪声——————————————————————！
+			///*！————————————加噪声——————————————————————！
 			imshow("Original", frame);
 			cvtColor(frame, gray, CV_RGB2GRAY);	//转换成灰度图像
 			imshow("Gray Frame", gray);
 			randn(noise, 0, noiseStd);
 			add(gray, noise, noised, noArray(), CV_8U);
 			imshow("Noised", noised);
-
-			//图像预处理
+			int cols = frame.cols;
+			int rows = frame.rows;
+			//处理
 			//medianBlur(noised, noised_mb, 3);
 			//blur(noised, noised_mb, Size(3, 3));
 			bilateralFilter(noised, noised_bf, 3, 40, 40);
-			imshow("noised_bf", noised_bf);
-			//filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0, 5;
 
 
-			////Sobel求轮廓
-			////求x方向梯度——noised_bf
-			//Sobel(noised_bf, grad_x1, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
-			//convertScaleAbs(grad_x1, abs_grad_x1);
-			////求y方向梯度
-			//Sobel(noised_bf, grad_y1, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
-			//convertScaleAbs(grad_y1, abs_grad_y1);
-			////合并梯度
-			//addWeighted(abs_grad_x1, 0.5, abs_grad_y1, 0.5, 0, dst1);
-			//imshow("Sobel算法轮廓提取效果nosied", dst1);
+			/*//Sobel求轮廓
+			//求x方向梯度——noised_bf
+			Sobel(noised_bf, grad_x1, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
+			convertScaleAbs(grad_x1, abs_grad_x1);
+			//求y方向梯度
+			Sobel(noised_bf, grad_y1, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
+			convertScaleAbs(grad_y1, abs_grad_y1);
+			//合并梯度
+			addWeighted(abs_grad_x1, 0.5, abs_grad_y1, 0.5, 0, dst1);
+			imshow("Sobel算法轮廓提取效果nosied", dst1);
 
-			////求x方向梯度——filtered_dly
-			//Sobel(noised_bf_dly, grad_x2, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
-			//convertScaleAbs(grad_x2, abs_grad_x2);
-			////求y方向梯度
-			//Sobel(noised_bf_dly, grad_y2, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
-			//convertScaleAbs(grad_y2, abs_grad_y2);
-			////合并梯度
-			//addWeighted(abs_grad_x2, 0.5, abs_grad_y2, 0.5, 0, dst2);
-			//imshow("Sobel算法轮廓提取效果filtered", dst2);
-			
-
+			//求x方向梯度——filtered_dly
+			Sobel(noised_bf_dly, grad_x2, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
+			convertScaleAbs(grad_x2, abs_grad_x2);
+			//求y方向梯度
+			Sobel(noised_bf_dly, grad_y2, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
+			convertScaleAbs(grad_y2, abs_grad_y2);
+			//合并梯度
+			addWeighted(abs_grad_x2, 0.5, abs_grad_y2, 0.5, 0, dst2);
+			imshow("Sobel算法轮廓提取效果filtered", dst2);
+			*/
 
 			//noised_bf_dly = noised_bf.clone();
 
-
-			//光流法
-			//Mat show = opticalFlow(dst1, dst2);
-			Mat show = opticalFlow(filtered_bf55, noised_bf);
-
-			////金字塔光流
-			//	//声明
-			//Mat img1_p0 = filtered_dly;
-			//Mat img2_p0 = noised_bf;
-			//resize(img1_p0, img1_p0, Size(640, 480), 0, 0, INTER_AREA);
-			//resize(img2_p0, img2_p0, Size(640, 480), 0, 0, INTER_AREA);
-			//Mat img1_p1, img1_p2, img2_p1, img2_p2, img2_p3;
-			//img1_p1 = img1_p0;
-			//img2_p1 = img1_p0;
-			////initial img pyr
-			//pyrDown(img1_p0, img1_p1, Size(img1_p0.cols / 2, img1_p0.rows / 2));
-			//pyrDown(img1_p1, img1_p2, Size(img1_p1.cols / 2, img1_p1.rows / 2));
-			//pyrDown(img2_p0, img2_p1, Size(img2_p0.cols / 2, img2_p0.rows / 2));
-			//pyrDown(img2_p1, img2_p2, Size(img2_p1.cols / 2, img2_p1.rows / 2));
-			//pyrDown(img2_p2, img2_p3, Size(img2_p2.cols / 2, img2_p2.rows / 2));
-			//
-			//Mat vel_up(img2_p3.size(), CV_32FC2, Scalar(0));
-			//opticalFlow_pyramid(img1_p2, img2_p2, vel_up, 4);
-			//opticalFlow_pyramid(img1_p1, img2_p1, vel_up, 8);
-			//Mat show = opticalFlow_pyramid(img1_p0, img2_p0, vel_up, 16);
-			//Mat element = getStructuringElement(MORPH_RECT, Size(10, 10));
-			//dilate(show, show, element);
-			//imshow("pyramid", show);
-
 			
-			//提取速度分量
-			split(show, show_channels);
-			speed_pixel = show_channels[0];
-			imshow("speed", speed_pixel);	
-
-			int rows = frame.rows;
-			int cols = frame.cols;
-
-			////简单的73和37
-			//filtered_bf = filtered_dly * 0.8 + noised_bf * 0.2;
-			//filtered_bf2 = filtered_dly * 0.3 + noised_bf * 0.7;
-
-			////根据速度函数，合成输出图像
-			//for (int i = 0; i < rows; i++) {
-			//	for (int j = 0; j < cols; j++) {
-			//		ofile << (int)*speed_pixel.ptr(i, j) << " ";
-			//		//判断速度阈值，选择合适的数据源
-			//		if (*speed_pixel.ptr(i, j) <= 35) {
-			//			*filtered.ptr(i, j) = *filtered_bf.ptr(i, j);
-			//			*choose.ptr(i, j) = 0;
-			//		}
-			//		else {
-			//			*filtered.ptr(i, j) = *filtered_bf2.ptr(i, j);
-			//			*choose.ptr(i, j) = 255;
-			//		}
-			//	}
-			//	ofile << endl;
-			//} 
 			
-			////扩展区域的合成
+
 			filtered_bf82 = filtered_dly * 0.8 + noised_bf * 0.2;
 			filtered_bf73 = filtered_dly * 0.7 + noised_bf * 0.3;
-			//filtered_bf64 = filtered_dly * 0.6 + noised_bf * 0.4;
+			filtered_bf64 = filtered_dly * 0.6 + noised_bf * 0.4;
 			filtered_bf55 = filtered_dly * 0.5 + noised_bf * 0.5;
 			filtered_bf46 = filtered_dly * 0.4 + noised_bf * 0.6;
 			filtered_bf37 = filtered_dly * 0.3 + noised_bf * 0.7;
-		
-
-			int proportion[750][750];
-
-			////边框默认不运动,金字塔算法中边框的13个像素点是255，这里修改为0
-			//for (int i = 0; i < rows; i++) {
-			//	for (int j = 0; j < cols; j++) {
-			//		if (i <= 13 || j <= 13 || i >= rows - 13 || j >= cols - 13) {
-			//			*speed_pixel.ptr(i, j) = 0;
-			//		}
-			//	}
-			//}
-			//int pz = 20;//高速度周围膨胀像素点
-			//int pz2 = 15;//一般速度周围膨胀像素点
-
-			////*********************静止区域
-			//for (int i = 0; i < rows; i++) {
-			//	for (int j = 0; j < cols; j++) {
-			//		if (*speed_pixel.ptr(i, j) < 30) {		
-			//			proportion[i][j] = 0;	//根据这个分配合成比例
-			//			*choose.ptr(i, j) = 0;	//choose矩阵用来观察
-			//		}
-			//	}
-			//}
-
-			////******************低速区域块扩展
-			////proportion[i][j] = 1;
-			////*choose.ptr(i, j) = 80;
-			//for (int i = 0; i < rows; i++) {
-			//	for (int j = 0; j < cols; j++) {
-			//		if (*speed_pixel.ptr(i, j) > 30) { 							
-			//			if (i < pz2 && j < pz2) {
-			//				for (int k = 0; k < i + pz2; k++) {
-			//					for (int z = 0; z < j + pz2; z++) {
-			//						proportion[k][z] = 1;
-			//						if (k < rows && z < cols) {
-			//							*choose.ptr(k, z) = 80;
-			//						}
-			//					}
-			//				}
-			//			}
-			//			if (i < pz2 && j > pz2) {
-			//				for (int k = 0; k < i + pz2; k++) {
-			//					for (int z = j - pz2; z < j + pz2; z++) {
-			//						proportion[k][z] = 1;
-			//						if (k < rows && z < cols) {
-			//							*choose.ptr(k, z) = 80;
-			//						}
-			//					}
-			//				}
-			//			}
-			//			if (i > pz2 && j < pz2) {
-			//				for (int k = i - pz2; k < i + pz2; k++) {
-			//					for (int z = 0; z < j + pz2; z++) {
-			//						proportion[k][z] = 1;
-			//						if (k < rows && z < cols) {
-			//							*choose.ptr(k, z) = 80;
-			//						}
-			//					}
-			//				}
-			//			}
-			//			if (i > pz2 && j > pz2) {
-			//				for (int k = i - pz2; k <= i + pz2; k++) {
-			//					for (int z = j - pz2; z <= j + pz2; z++) {
-			//						proportion[k][z] = 1;
-			//						if (k < rows && z < cols) {
-			//							*choose.ptr(k, z) = 80;
-			//						}
-			//					}
-			//				}
-			//			}	
-			//		}
-			//	}
-			//}
-
-			////*******************高速区域块扩展
-			////proportion[i][j] = 2;
-			////*choose.ptr(i, j) = 160;
-			//for (int i = 0; i < rows; i++) {
-			//	for (int j = 0; j < cols; j++) {
-			//		if (*speed_pixel.ptr(i, j) > 65) {
-			//			if (i < pz && j < pz) {
-			//				for (int k = 0; k < i + pz; k++) {
-			//					for (int z = 0; z < j + pz; z++) {
-			//						proportion[k][z] = 2;
-			//						if (k < rows && z < cols) {
-			//							*choose.ptr(k, z) = 160;
-			//						}
-			//					}
-			//				}
-			//			}
-			//			if (i < pz && j > pz) {
-			//				for (int k = 0; k < i + pz; k++) {
-			//					for (int z = j - pz; z < j + pz; z++) {
-			//						proportion[k][z] = 2;
-			//						if (k < rows && z < cols) {
-			//							*choose.ptr(k, z) = 160;
-			//						}
-			//					}
-			//				}
-			//			}
-			//			if (i > pz && j < pz) {
-			//				for (int k = i - pz; k < i + pz; k++) {
-			//					for (int z = 0; z < j + pz; z++) {
-			//						proportion[k][z] = 2;
-			//						if (k < rows && z < cols) {
-			//							*choose.ptr(k, z) = 160;
-			//						}
-			//					}
-			//				}
-			//			}
-			//			if (i >= pz && j >= pz) {
-			//				for (int k = i - pz; k <= i + pz; k++) {
-			//					for (int z = j - pz; z <= j + pz; z++) {
-			//						proportion[k][z] = 2;
-			//						if (k < rows && z < cols) {
-			//							*choose.ptr(k, z) = 160;
-			//						}
-			//					}
-			//				}
-			//			}
-			//		}
-			//	}
-			//}
-
-			////高速区域填回
-			////3,155
-			//for (int i = 0; i < rows; i++) {
-			//	for (int j = 0; j < cols; j++) {
-			//		if (*speed_pixel.ptr(i, j) > 65) {
-			//			proportion[i][j] = 3;
-			//			*choose.ptr(i, j) = 255;
-			//		}
-			//	}
-			//}
-
-			////根据分布图，合成图像
-			//for (int i = 0; i < rows; i++) {
-			//	for (int j = 0; j < cols; j++) {
-			//		if (proportion[i][j] == 0) {
-			//			*filtered.ptr(i, j) = *filtered_bf82.ptr(i, j);
-			//		}
-			//		else if (proportion[i][j] == 1) {
-			//			*filtered.ptr(i, j) = *filtered_bf55.ptr(i, j);
-			//		}
-			//		else if (proportion[i][j] == 2) {
-			//			*filtered.ptr(i, j) = *filtered_bf46.ptr(i, j);
-			//		}
-			//		else {
-			//			*filtered.ptr(i, j) = *filtered_bf37.ptr(i, j);
-			//		}
-			//	}
-			//}				
 
 
+			//利用上一帧的权重做加权，给金字塔用
+			//根据分布图，合成图像
+			for (int i2 = 0; i2 < rows; i2++) {
+				for (int j2 = 0; j2 < cols; j2++) {
+					*for_motion.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
+				}
+			}
+
+			//*/
+			//光流法
+			//Mat show = opticalFlow(dst1, dst2);
+			Mat show = opticalFlow(noised_bf, for_motion);
+			//Mat show2 = opticalFlow(noised_bf, noised_bf_dly);
+			//提取速度分量
+			//split(show2, show_channels2);
+			//speed_pixel2 = show_channels2[0];
+			//imshow("speed1", speed_pixel2);
+
+			//金字塔光流
+			/*
+			//金字塔光流
+				//声明
+			//Mat img1_p0 = filtered_dly;
+			Mat img1_p0 = for_motion;
+			Mat img2_p0 = noised_bf;
+			resize(img1_p0, img1_p0, Size(640, 480), 0, 0, INTER_AREA);
+			resize(img2_p0, img2_p0, Size(640, 480), 0, 0, INTER_AREA);
+			Mat img1_p1, img1_p2, img2_p1, img2_p2, img2_p3;
+			img1_p1 = img1_p0;
+			img2_p1 = img1_p0;
+				//initial img pyr
+			pyrDown(img1_p0, img1_p1, Size(img1_p0.cols / 2, img1_p0.rows / 2));
+			pyrDown(img1_p1, img1_p2, Size(img1_p1.cols / 2, img1_p1.rows / 2));
+			pyrDown(img2_p0, img2_p1, Size(img2_p0.cols / 2, img2_p0.rows / 2));
+			pyrDown(img2_p1, img2_p2, Size(img2_p1.cols / 2, img2_p1.rows / 2));
+			pyrDown(img2_p2, img2_p3, Size(img2_p2.cols / 2, img2_p2.rows / 2));
+			
+			Mat vel_up(img2_p3.size(), CV_32FC2, Scalar(0));
+			opticalFlow_pyramid(img1_p2, img2_p2, vel_up, 4);
+			opticalFlow_pyramid(img1_p1, img2_p1, vel_up, 8);
+			Mat show = opticalFlow_pyramid(img1_p0, img2_p0, vel_up, 16);
+			Mat element = getStructuringElement(MORPH_RECT, Size(10, 10));
+			dilate(show, show, element);
+			//imshow("2", show);
+			*/
 
 
+			//提取速度分量
+			split(show, show_channels);
+			speed_pixel = show_channels[0];
+			imshow("speed2", speed_pixel);
+			//优化调整速度
+			//bilateralFilter(speed_pixel, speed_pixel_b, 3, 40, 40);
+			speed_pixel_b = speed_pixel;
+			
+
+			//简单的37喝73
+			/*
+			//简单的73和37
+			filtered_bf = filtered_dly * 0.8 + noised_bf * 0.2;
+			filtered_bf2 = filtered_dly * 0.3 + noised_bf * 0.7;
+			imshow("bf", noised_bf);
+			//根据速度函数，合成输出图像
+			for (int i = 0; i < rows; i++) {
+				//ofile << "第" << i << "行 ";
+				for (int j = 0; j < cols; j++) {
+					//判断速度阈值，选择合适的数据源
+					if (*speed_pixel_b.ptr(i, j) <= 60) {
+						//cout << *speed_pixel.ptr(i, j) << endl;
+						*filtered.ptr(i, j) = *filtered_bf.ptr(i, j);
+						*choose.ptr(i, j) = 0;
+					}
+					else {
+						*filtered.ptr(i, j) = *filtered_bf2.ptr(i, j);
+						*choose.ptr(i, j) = 255;
+					}
+					//信息存储
+					//ofile << (int)*speed_pixel_b.ptr(i, j) << " ";
+				}
+				//ofile << endl;
+			}
+			//ofile << endl;
+			*/
 
 
-
-			//wxl*********
-			//边框默认不运动,金字塔算法中边框的13个像素点是255，这里修改为0
-			///*线性扩展
+			//没有线性梯度变化的块扩展
+			/*扩展区域的合成
 			//根据速度函数，得到各点图像合成比例图
-			//这里的proportion取值从20到0；
-			//边框默认不运动,光流法算法中边框的3个像素点是255，这里修改为0
+			//3——dly * 0.3 + noised_bf * 0.7;
+			//2——dly * 0.5 + noised_bf * 0.5;
+			//1——dly * 0.4 + noised_bf * 0.6;
+			//0——dly * 0.7 + noised_bf * 0.3;
+			//边框默认不运动,金字塔算法中边框的13个像素点是255，这里修改为0
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (i <= 3 || j <= 3 || i >= rows - 3 || j >= cols - 3) {
-						*speed_pixel.ptr(i, j) = 0;
+					if (i <= 13 || j <= 13  || i >= rows - 13 || j >= cols - 13 ) {
+
+						*speed_pixel_b.ptr(i, j) = 0;
 					}
 				}
 			}
-			double d_high = 50;//高速区域扩展距离
-			double d_low = 30;//低速
-
-			double q_high = 50;//高速区域扩展中心强度
-			double q_low = 30;
-
+			int pz = 20;//高速度周围膨胀像素点
+			int pz2 = 15;//一般速度周围膨胀像素点
 			//静止区域
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel.ptr(i, j) < 30) {
-						proportion[i][j] = 0;
+					if (*speed_pixel_b.ptr(i, j) < 30) {
+						proportion[i][j] = 0;	//根据这个分配合成比例
+						*choose.ptr(i, j) = 0;	//观察用
 					}
 				}
 			}
 			//低速周围快扩展
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel.ptr(i, j) >= 30) {
-						//记住，待修改
-						for (int k = 0; k < rows; k++) {
-							for (int z = 0; z < cols; z++) {
-								double distance = sqrt((i - k)*(i - k) + (j - z)*(j - z));
-								if (d_low - distance >= 0) {
-									proportion[k][z] = max(proportion[k][z], (-(d_low / (q_low*q_low))*distance*distance + q_low));
+					if (*speed_pixel_b.ptr(i, j) >= 30) {
+						//proportion[i][j] = 1;
+						//*choose.ptr(i, j) = 80;
+						if (i < pz2) {//记住
+							for (int k = 0; k < i + pz2; k++) {
+								for (int z = 0; z < j + pz2; z++) {
+									proportion[k][z] = 1;
+									if (k < rows && z < cols) {
+										*choose.ptr(k, z) = 80;
+									}
+								}
+							}
+						}
+						if (i >= pz2 && j >= pz2) {
+							for (int k = i - pz2; k <= i + pz2; k++) {
+								for (int z = j - pz2; z <= j + pz2; z++) {
+									proportion[k][z] = 1;
+									if (k < rows && z < cols) {
+										*choose.ptr(k, z) = 80;
+									}
 								}
 							}
 						}
@@ -426,10 +329,112 @@ int main(int argc, char *argv[])
 			//高速周围快扩展
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel.ptr(i, j) >= 55) {
+					if (*speed_pixel_b.ptr(i, j) >= 65) {
+						//proportion[i][j] = 3;
+						//*choose.ptr(i, j) = 255;
+						if (i < pz) {
+							for (int k = 0; k < i + pz; k++) {
+								for (int z =0; z < j + pz; z++) {
+									proportion[k][z] = 2;
+									if (k < rows && z < cols) {
+										*choose.ptr(k, z) = 160;
+									}
+								}
+							}
+						}
+						if (i >= pz && j >= pz) {
+							for (int k = i - pz; k <= i + pz; k++) {
+								for (int z = j - pz; z <= j + pz; z++) {
+									proportion[k][z] = 2;
+									if (k < rows && z < cols){
+										*choose.ptr(k, z) = 160;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			//高速中心区域填回
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (*speed_pixel_b.ptr(i, j) >= 65) {
+						proportion[i][j] = 3;
+						*choose.ptr(i, j) = 255;
+					}
+				}
+			}
+			
+
+			//根据分布图，合成图像
+			for (int i2 = 0; i2 < rows; i2++) {
+				for (int j2 = 0; j2 < cols; j2++) {
+					if (proportion[i2][j2] == 0) {
+						*filtered.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
+					}
+					else if (proportion[i2][j2] == 1) {
+						*filtered.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
+					}
+					else if (proportion[i2][j2] == 2) {
+						*filtered.ptr(i2, j2) = *filtered_bf46.ptr(i2, j2);
+					}
+					else{
+						*filtered.ptr(i2, j2) = *filtered_bf37.ptr(i2, j2);
+					}
+				}
+			}
+			*/
+
+
+
+			///*线性扩展
+			//根据速度函数，得到各点图像合成比例图
+			//这里的proportion取值从20到0；
+			//边框默认不运动,光流法算法中边框的3个像素点是255，这里修改为0
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (i <= 3 || j <= 3  || i >= rows - 3 || j >= cols - 3 ) {
+						*speed_pixel_b.ptr(i, j) = 0;
+					}
+				}
+			}
+			double d_high = 20;//高速区域扩展距离
+			double d_low = 20;//低速
+
+			double q_high = 30;//高速区域扩展中心强度
+			double q_low = 30;
+
+			//静止区域
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (*speed_pixel_b.ptr(i, j) < 30) {
+						proportion[i][j] = 0;	
+					}
+				}
+			}
+			//低速周围快扩展
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (*speed_pixel_b.ptr(i, j) >= 30) {
+						//记住，待修改
 						for (int k = 0; k < rows; k++) {
 							for (int z = 0; z < cols; z++) {
-								double distance = sqrt((i - k)*(i - k) + (j - z)*(j - z));
+								double distance = sqrt((i - k)*(i - k) + (j - z)*(j - z)) ;
+								if (d_low - distance >= 0) {
+									proportion[k][z] = max(proportion[k][z], (-(d_low/(q_low*q_low))*distance*distance+q_low));
+								}
+							}
+						}
+					}
+				}
+			}
+			//高速周围快扩展
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (*speed_pixel_b.ptr(i, j) >= 55) {
+						for (int k = 0; k < rows; k++) {
+							for (int z = 0; z < cols; z++) {
+								double distance = sqrt((i - k)*(i - k) + (j - z)*(j - z)) ;
 								if (d_high - distance >= 0) {
 									proportion[k][z] = max(proportion[k][z], (-(d_high / (q_high*q_high))*distance*distance + q_high));
 								}
@@ -438,7 +443,7 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-
+			
 			//观察用
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
@@ -449,7 +454,7 @@ int main(int argc, char *argv[])
 			//根据分布图，合成图像
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					*filtered.ptr(i, j) = (0.8 - 0.6*(proportion[i][j] / q_high))**filtered_dly.ptr(i, j) + (0.2 + 0.6*(proportion[i][j] / q_high))**noised_bf.ptr(i, j);
+					*filtered.ptr(i, j) = (0.8-0.6*(proportion[i][j]/ q_high))**filtered_dly.ptr(i, j)+ (0.2 + 0.6*(proportion[i][j] / q_high))**noised_bf.ptr(i, j);
 				}
 			}
 			//*/
@@ -457,28 +462,25 @@ int main(int argc, char *argv[])
 
 
 
-
-			
 			imshow("Filtered", filtered);
 			imshow("Choose", choose);
+
 			//前一帧
-			filtered_dly = filtered.clone();
-			//filtered_dly = filtered;
+			filtered_dly = filtered;
+			noised_bf_dly = noised_bf.clone();
+
 
 			//！————————————保存视频————————————！
 			Filtered << filtered;
 			Motion << speed_pixel;
 			Choosing << choose;
 
-			cout << "当前帧数:" << frameCount << " /162 (5s);" << endl;
-			//ofile << endl << endl;
-
 			//循环关键，不动
 			waitKey(1);
-
 			videoSource >> frame;
-			
-			//resize(frame, frame, Size(640, 480), 0, 0, INTER_AREA);
+			resize(frame, frame, Size(640, 480), 0, 0, INTER_AREA);
+
+
 
 			frameCount++;
 			if (frame.empty()) {
@@ -492,9 +494,10 @@ int main(int argc, char *argv[])
 		cout << "Error: " << ex.what() << endl;
 	}
 
-	return 1;
+	return 0;
 }
 
+//4*4代码
 /*4x4代码
 Mat opticalFlow(Mat img1, Mat img2) {
 	img1.convertTo(img1, CV_32F);
@@ -628,9 +631,8 @@ Mat opticalFlow(Mat img1, Mat img2) {
 */
 
 
-//1x1代码
-//需要添加函数的注释,参数说明
-//show三个通道的意义
+///*1x1代码
+
 Mat opticalFlow(Mat img1, Mat img2) {
 	img1.convertTo(img1, CV_32F);
 	img2.convertTo(img2, CV_32F);
@@ -694,12 +696,15 @@ Mat opticalFlow(Mat img1, Mat img2) {
 				sxysyt[x][y] = sxy * syt;
 				sxxsyt[x][y] = sxx * syt;
 				sxysxt[x][y] = sxy * sxt;
+
 			}
 			else
 			{
 				velx[x][y] = 0;
 				vely[x][y] = 0;
+
 			}
+
 		}
 	float d1, d2;
 	float max = 0;
@@ -722,11 +727,13 @@ Mat opticalFlow(Mat img1, Mat img2) {
 			}
 			double speed = sqrt(d1 * d1 + d2 * d2);
 			speedmax[i][j] = speed;
-			if ((max < speed) && (speed < 10)) { max = speed; } //???
+			if ((max < speed) && (speed < 10)) { max = speed; }
 		}
 	cout << max << endl;
 	cv::Mat show(row, col, CV_8UC3);
-	
+
+
+
 	for (int i = 0; i < XSIZE - 0; i++) {
 		for (int j = 0; j < YSIZE - 0; j++) {
 			int y = j * 1;//CSIZE
@@ -765,14 +772,11 @@ Mat opticalFlow(Mat img1, Mat img2) {
 
 
 
-
-//输入img1,img2
-//vel_up表示 ?? 
 Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL) {
 	img1.convertTo(img1, CV_32F);
 	img2.convertTo(img2, CV_32F);
 	vel_up.convertTo(vel_up, CV_32F);
-	ofstream myout("C:/Users/Sugar_desktop/Desktop/bg.txt");
+	ofstream myout("C:/Users/yrhxm/Desktop/bg.txt");
 
 	int i, j, m, n;
 	int Ix, Iy, It;
@@ -857,6 +861,8 @@ Mat opticalFlow_pyramid(Mat& img1, Mat& img2, Mat& vel_up, int CSIZE_ALL) {
 	vel_up = vel;
 	return show;
 }
+
+
 
 
 int max(double a, double b)
