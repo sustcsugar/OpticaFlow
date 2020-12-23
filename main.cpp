@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
 			//根据分布图，合成图像
 			for (int i2 = 0; i2 < rows; i2++) {
 				for (int j2 = 0; j2 < cols; j2++) {
-					*for_motion.ptr(i2, j2) = *filtered_bf55.ptr(i2, j2);
+					*for_motion.ptr(i2, j2) = *filtered_bf82.ptr(i2, j2);
 				}
 			}
 
@@ -398,16 +398,19 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-			double d_high = 20;//高速区域扩展距离
+			double d_high = 30;//高速区域扩展距离
 			double d_low = 20;//低速
 
 			double q_high = 30;//高速区域扩展中心强度
-			double q_low = 30;
+			double q_low = 20;
+
+			int low_speed = 20;
+			int high_speed = 40;
 
 			//静止区域
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel_b.ptr(i, j) < 30) {
+					if (*speed_pixel_b.ptr(i, j) < low_speed) {
 						proportion[i][j] = 0;	
 					}
 				}
@@ -415,7 +418,7 @@ int main(int argc, char *argv[])
 			//低速周围快扩展
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel_b.ptr(i, j) >= 30) {
+					if (*speed_pixel_b.ptr(i, j) >= low_speed) {
 						//记住，待修改
 						for (int k = 0; k < rows; k++) {
 							for (int z = 0; z < cols; z++) {
@@ -429,9 +432,10 @@ int main(int argc, char *argv[])
 				}
 			}
 			//高速周围快扩展
+			//高速周围快扩展
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					if (*speed_pixel_b.ptr(i, j) >= 55) {
+					if (*speed_pixel_b.ptr(i, j) >= high_speed) {
 						for (int k = 0; k < rows; k++) {
 							for (int z = 0; z < cols; z++) {
 								double distance = sqrt((i - k)*(i - k) + (j - z)*(j - z)) ;
@@ -458,8 +462,6 @@ int main(int argc, char *argv[])
 				}
 			}
 			//*/
-
-
 
 
 			imshow("Filtered", filtered);
